@@ -1,0 +1,22 @@
+PowerSigns: give your signs Power!
+
+Quick summary of different PowerSigns:
+
+Push: push an adjacent row of blocks with the material specified by one block, can push any direction but towards the sign itself
+
+Pull: pull on a row of blocks with the material specified from far away towards the sign
+
+Activate: attempt to activate a row of signs as if they were other PowerSigns
+
+Activate_long: activates a single sign from a distance
+
+Cannon: launch a TNT stored in an adjacent Dispenser, specifying an angle and power when launching from the front of the dispenser
+
+swap and copy: sign text manipulation PowerSign
+
+[Planned:]
+
+Chest: push and pull materials from a chest with a PowerSign
+
+More modifiers for PS instructions
+
