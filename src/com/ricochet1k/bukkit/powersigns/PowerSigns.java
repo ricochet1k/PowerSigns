@@ -9,6 +9,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.minecraft.server.Entity;
+import net.minecraft.server.EntityFallingSand;
 import net.minecraft.server.EntityTNTPrimed;
 import net.minecraft.server.TileEntity;
 import net.minecraft.server.World;
@@ -22,6 +24,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.craftbukkit.CraftChunk;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.block.CraftSign;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.Inventory;
@@ -282,7 +285,8 @@ public class PowerSigns extends JavaPlugin
 		
 		//get the information about the ballistics for the TNT projectile on the second line
 		final String ballisticInfo[] = signState.getLine(1).split(" ");
-		double power = 0, angle = 0;
+		double power = 0;
+		int angle = 0;
 		if(ballisticInfo[0].length() > 0 && ballisticInfo[1].length() > 0) 
 		{
 			//parse power
@@ -308,7 +312,7 @@ public class PowerSigns extends JavaPlugin
 			//parse angle
 			try
 			{
-				angle = Double.parseDouble(ballisticInfo[1].trim());
+				angle = Integer.parseInt(ballisticInfo[1].trim());
 				if(Math.abs(angle) > 90)
 				{
 					log.info("Error! Absolute value of cannon angle exceeds 90.");
@@ -327,24 +331,42 @@ public class PowerSigns extends JavaPlugin
 			return false;
 		}
 		
-		//Now launch the TNT! :D
 		//check that sign's facing out from a dispenser and that the dispenser's facing isn't obstructed
 		final Block dispenserBlock = signBlock.getFace(forward);
 		if(!isDispenser(dispenserBlock)) return false;		
 		final Block placeHere = dispenserBlock.getFace(getDispenserFacing(dispenserBlock));
 		if(!isEmpty(placeHere)) return false; //make sure nothing is obstructing it
 		
-		//check for TNT to consume
-		if(!subtractItems((Dispenser)dispenserBlock.getState(), Material.TNT, cost)) return false;
-		
+		//check for a consumable material for a Cannon function, and respond appropriately.
 		//spawn the TNT - fire!
 		final CraftWorld cWorld = (CraftWorld)signBlock.getWorld();
-		final EntityTNTPrimed projectile = new EntityTNTPrimed(cWorld.getHandle(),
-				placeHere.getLocation().getX(),
-				placeHere.getLocation().getY(),
-				placeHere.getLocation().getZ());
-		
-		//give the TNT its velocity vector
+		Entity projectile = null;
+		if(subtractItems((Dispenser)dispenserBlock.getState(), Material.TNT, cost)) 
+		{
+			projectile = new EntityTNTPrimed(cWorld.getHandle(),
+					placeHere.getLocation().getX(),
+					placeHere.getLocation().getY(),
+					placeHere.getLocation().getZ());
+		}
+		else if(subtractItems((Dispenser)dispenserBlock.getState(), Material.SAND, cost)) 
+		{
+			projectile = new EntityFallingSand(cWorld.getHandle(),
+					placeHere.getLocation().getX(),
+					placeHere.getLocation().getY(),
+					placeHere.getLocation().getZ(),
+					Material.SAND.getId());
+		}
+		else if(subtractItems((Dispenser)dispenserBlock.getState(), Material.GRAVEL, cost))
+		{
+			projectile = new EntityFallingSand(cWorld.getHandle(),
+					placeHere.getLocation().getX(),
+					placeHere.getLocation().getY(),
+					placeHere.getLocation().getZ(),
+					Material.GRAVEL.getId());
+		}
+		else return false;
+	
+		//give the projectile its velocity vector
 		projectile.f(power * Math.cos(angle*Math.PI/180) * (placeHere.getX() - dispenserBlock.getX()),
 					power * Math.sin(angle*Math.PI/180),
 					power * Math.cos(angle*Math.PI/180) * (placeHere.getZ() - dispenserBlock.getZ()));

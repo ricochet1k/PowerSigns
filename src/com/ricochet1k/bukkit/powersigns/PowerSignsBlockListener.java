@@ -33,7 +33,7 @@ public class PowerSignsBlockListener extends BlockListener
 		{
 			Block temp = block.getFace(face);
 			if (temp.getType().equals(Material.WALL_SIGN) || temp.getType().equals(Material.SIGN_POST)) 
-				plugin.tryPowerSign(temp);
+				PowerSigns.tryPowerSign(temp);
 		}
 	}
 }
