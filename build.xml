@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     Mar 24, 2011 5:21:43 PM                                                        
+
+     PowerSigns    
+     Give your signs Power to move blocks and more!
+                   
+     matt                                                                
+     ====================================================================== -->
+<project name="PowerSigns" default="jar">
+	<description>
+            Give your signs Power to move blocks and more!
+    </description>
+
+	<!-- ================================= 
+          target: jar              
+         ================================= -->
+	<target name="jar">
+		<delete file="PowerSigns.jar" />
+
+		<jar destfile="PowerSigns.jar" update="true">
+			<fileset dir="bin" includes="**/*.class" />
+			<fileset dir="." includes="plugin.yml" />
+
+			<manifest>
+				<attribute name="Built-By" value="ricochet1k"/>
+				
+				<!-- Information about the program itself -->
+				<attribute name="Implementation-Vendor" value=""/>
+				<attribute name="Implementation-Title" value="PowerSigns"/>
+				<attribute name="Implementation-Version" value="0.5"/>
+				<!-- details -->
+				<!--
+				<section name="common/MyClass.class">
+					<attribute name="Sealed" value="false"/>
+				</section>
+				-->
+			</manifest>
+		</jar>
+	</target>
+
+</project>
