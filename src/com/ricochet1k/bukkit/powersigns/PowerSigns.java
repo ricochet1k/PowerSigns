@@ -1,8 +1,5 @@
 package com.ricochet1k.bukkit.powersigns;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -26,7 +23,6 @@ import org.bukkit.craftbukkit.CraftChunk;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.block.CraftDispenser;
 import org.bukkit.craftbukkit.block.CraftSign;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.Inventory;
@@ -57,26 +53,40 @@ public class PowerSigns extends JavaPlugin
 	@Override
 	public void onEnable()
 	{
-		log.info("Enabling PowerSigns 0.5");
+		log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName());
 		getServer().getPluginManager().registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Highest, this);
 	}
 
 	@Override
 	public void onDisable()
 	{
-		log.info("Disabling PowerSigns");
+		log.info("["+getDescription().getName()+"] Disabling PowerSigns");
 	}
 
 	static final Material[] signMaterials = new Material[] { Material.SIGN_POST, Material.WALL_SIGN };
-	static final Pattern actionPattern = Pattern.compile("!([a-z_]+)", Pattern.CASE_INSENSITIVE);
-	static final Pattern repeatPattern = Pattern.compile("\\s*(?:\\*(\\d{1,2}))?");
-	static final Pattern verticalPattern = Pattern.compile("\\s*([ud])?", Pattern.CASE_INSENSITIVE);
-	static final Pattern moveDirPattern = Pattern.compile("\\s*([^v<>])?");
-	static final Pattern cannonTypePattern = Pattern.compile("\\s*(tnt|sand|gravel)?", Pattern.CASE_INSENSITIVE);
-	static final Pattern directionPattern = Pattern.compile("\\s*([fblruds])", Pattern.CASE_INSENSITIVE);
 	
-	static final Pattern lineSpecPattern = Pattern.compile("([fblruds])([1234]) ([fblruds])([1234])",
-	                                                       Pattern.CASE_INSENSITIVE);
+	
+	/////////////// Patterns //////////////////
+	
+	//static final Pattern actionPattern = Pattern.compile("!([a-z_]+)", Pattern.CASE_INSENSITIVE);
+	static final String repeatPart = "(?:\\*(\\d{1,2}))?";
+	static final String verticalPart = "([ud])?";
+	static final String moveDirPart = "([^v<>])?";
+	static final String cannonTypePart = "(tnt|sand|gravel)?";
+	static final String directionPart = "([fblruds])";
+	static final String allPart = "(all)?";
+	
+	static final Pattern pushPattern = Pattern.compile(joinBy("\\s*","!push",repeatPart,verticalPart,moveDirPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern pullPattern = Pattern.compile(joinBy("\\s*","!pull",repeatPart,verticalPart,moveDirPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern detectPattern = Pattern.compile(joinBy("\\s*","!detect",verticalPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern linemovePattern = Pattern.compile(joinBy("\\s*","!line(copy|swap)"), Pattern.CASE_INSENSITIVE);
+	static final Pattern activatePattern = Pattern.compile(joinBy("\\s*","!activate",allPart, verticalPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern activateLongPattern = Pattern.compile(joinBy("\\s*","!activate_long",verticalPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern cannonPattern = Pattern.compile(joinBy("\\s*","!cannon",cannonTypePart,verticalPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern invpushPattern = Pattern.compile(joinBy("\\s*","!invpush",repeatPart,verticalPart,directionPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern invpullPattern = Pattern.compile(joinBy("\\s*","!invpull",repeatPart,verticalPart,directionPart), Pattern.CASE_INSENSITIVE);
+	
+	static final Pattern lineSpecPattern = Pattern.compile("([fblruds])([1234]) ([fblruds])([1234])", Pattern.CASE_INSENSITIVE);
 	
 	String failMsg = "";
 	protected boolean debugFail(String msg)
@@ -124,125 +134,123 @@ public class PowerSigns extends JavaPlugin
 		
 		failMsg = "";
 		
-		final String action;
+		//final String action;
 		
-		String[] result = matchPatterns(command, actionPattern);
-		if (result == null) { debugFail("syntax"); doDebugging(signBlock, 2); return false; }
+		//String[] result = matchPatterns(command, actionPattern);
+		//if (result == null) { debugFail("syntax"); doDebugging(signBlock, 2); return false; }
 		
-		action = result[0];
+		//action = m.group(0);
 
 		
 
 		try
 		{
 			boolean ret = false;
+			Matcher m = pushPattern.matcher(command);
 			// Execute the action
-			if (action.equals("push"))
+			if (m.usePattern(pushPattern).matches())
 			{
-				result = matchPatternsEnd(result[1], repeatPattern, verticalPattern, moveDirPattern);
-				if (result == null) { debugFail("param syntax"); doDebugging(signBlock, 2); return false; }
-				
-				final int repeat = (result[0] != null) ? Integer.parseInt(result[0]) : 1;
-				if (repeat <= 0) return false;
+				final int repeat = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : 1;
+				if (repeat <= 0) return debugFail("bad repeat");
 
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[1]);
+				BlockFace forward = getForward(signDir, m.group(2));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
-				BlockFace direction = getDirection(result[2], signDir, result[1]);
+				BlockFace direction = getDirection(m.group(3), signDir, m.group(2));
 
 				Material[] moveTypes = getMaterials(signState.getLine(1));
 				
 				ret = tryPushBlocks(startBlock, forward, moveTypes, repeat);
 			}
-			else if (action.equals("pull"))
+			else if (m.usePattern(pullPattern).matches())
 			{
-				result = matchPatternsEnd(result[1], repeatPattern, verticalPattern, moveDirPattern);
-				if (result == null) { debugFail("param syntax"); doDebugging(signBlock, 2); return false; }
-				
-				final int repeat = (result[0] != null) ? Integer.parseInt(result[0]) : 1;
-				if (repeat <= 0) return false;
+				final int repeat = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : 1;
+				if (repeat <= 0) return debugFail("bad repeat");
 
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[1]);
+				BlockFace forward = getForward(signDir, m.group(2));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
-				BlockFace direction = getDirection(result[2], signDir, result[1]);
+				BlockFace direction = getDirection(m.group(3), signDir, m.group(2));
 
 				Material[] moveTypes = getMaterials(signState.getLine(1));
 				
 				ret = tryPullBlocks(startBlock, forward, moveTypes, repeat);
 			}
-			else if (action.equals("detect"))
+			else if (m.usePattern(detectPattern).matches())
 			{
-				result = matchPatternsEnd(result[1], verticalPattern);
-				if (result == null) { debugFail("param syntax"); doDebugging(signBlock, 2); return false; }
-				
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[0]);
+				BlockFace forward = getForward(signDir, m.group(1));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
 				
 				signState.setLine(1, startBlock.getType().toString().toLowerCase());
 				return true;
 			}
-			else if (action.equals("linecopy") || action.equals("lineswap"))
+			else if (m.usePattern(linemovePattern).matches())
 			{
 				BlockFace signDir = getSignDirection(signBlock);
 				
-				ret = tryLineAction(action, signState.getLine(1), signBlock, signDir);
+				ret = tryLineAction(m.group(1), signState.getLine(1), signBlock, signDir);
 			}
-			else if (action.equals("activate"))
+			else if (m.usePattern(activatePattern).matches())
 			{
-				String[] oldResult = result;
-				result = matchPatternsEnd(result[1], verticalPattern);
-				if (result == null) { debugFail("param syntax"); doDebugging(signBlock, 2); log.warning(Arrays.toString(oldResult)); return false; }
-				
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[0]);
+				BlockFace forward = getForward(signDir, m.group(2));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
 
-				ret = tryActivate(startBlock, forward);
+				ret = tryActivate(startBlock, forward, m.group(1).equals("all"));
 			}
-			else if (action.equals("activate_long"))
+			else if (m.usePattern(activateLongPattern).matches())
 			{
-				result = matchPatternsEnd(result[1], verticalPattern);
-				if (result == null) { failMsg = "param syntax"; doDebugging(signBlock, 2); return false; }
-				
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[0]);
+				BlockFace forward = getForward(signDir, m.group(1));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
 
 				ret = tryActivateLong(startBlock, forward);
 			}
-			else if (action.equals("cannon"))
+			else if (m.usePattern(cannonPattern).matches())
 			{
-				result = matchPatternsEnd(result[1], cannonTypePattern, verticalPattern);
-				if (result == null) { debugFail("param syntax"); doDebugging(signBlock, 2); return false; }
-				
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[1]);
+				BlockFace forward = getForward(signDir, m.group(2));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
 
-				ret = tryCannonSign(startBlock, forward, signState.getLine(1), result[0]);
+				ret = tryCannonSign(startBlock, forward, signState.getLine(1), m.group(1));
 			}
-			else if (action.equals("invput"))
+			else if (m.usePattern(invpushPattern).matches())
 			{
-				result = matchPatternsEnd(result[1], repeatPattern, verticalPattern, directionPattern);
-				if (result == null) { debugFail("param syntax"); doDebugging(signBlock, 2); return false; }
-				
-				final int repeat = (result[0] != null) ? Integer.parseInt(result[0]) : 1;
-				if (repeat <= 0) return false;
+				final int repeat = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : 1;
+				if (repeat <= 0) return debugFail("bad repeat");
 				
 				BlockFace signDir = getSignDirection(signBlock);
-				BlockFace forward = getForward(signDir, result[1]);
+				BlockFace forward = getForward(signDir, m.group(2));
 				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
 				
-				BlockFace dir = strToDirection(result[2], forward);
-				if (dir == null) { debugFail("bad dir: "+result[2]); doDebugging(signBlock, 2); return false; }// shouldn't happen
-					
+				BlockFace dir = strToDirection(m.group(3), signDir);
+				if (dir == null) { debugFail("bad dir: "+m.group(3)); doDebugging(signBlock, 2); return false; }// shouldn't happen
+				
+				
+				Material[] moveTypes = getMaterials(signState.getLine(1));
+				
+				ret = tryInvPush(signBlock.getFace(dir), startBlock, forward, moveTypes, repeat);
+			}
+			else if (m.usePattern(invpullPattern).matches())
+			{
+				final int repeat = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : 1;
+				if (repeat <= 0) return debugFail("bad repeat");
+				
+				BlockFace signDir = getSignDirection(signBlock);
+				BlockFace forward = getForward(signDir, m.group(2));
+				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+				
+				BlockFace dir = strToDirection(m.group(3), signDir);
+				if (dir == null) { debugFail("bad dir: "+m.group(3)); doDebugging(signBlock, 2); return false; }// shouldn't happen
+				
 
 				Material[] moveTypes = getMaterials(signState.getLine(1));
 				
-				ret = tryInvPut(signBlock.getFace(dir), startBlock, forward, moveTypes, repeat);
+				ret = tryInvPull(signBlock.getFace(dir), startBlock, forward, moveTypes, repeat);
 			}
+			else
+			{ debugFail("syntax"); doDebugging(signBlock, 2); return false; }
 			
 			debugFail("unknown");
 			doDebugging(signBlock, ret? 0 : 1);
@@ -577,13 +585,13 @@ public class PowerSigns extends JavaPlugin
 			{
 				CraftSign sign0 = ((CraftSign) rsignLocs[1].getBlock().getState());
 				CraftSign sign1 = ((CraftSign) rsignLocs[1].getBlock().getState());
-				if (action.equals("linecopy"))
+				if (action.equals("copy"))
 				{
 					sign1.setLine(rsignLines[1], sign0.getLine(rsignLines[0]));
 
 					sign1.update();
 				}
-				else if (action.equals("lineswap"))
+				else if (action.equals("swap"))
 				{
 					String line1 = sign1.getLine(rsignLines[1]);
 					sign1.setLine(rsignLines[1], sign0.getLine(rsignLines[0]));
@@ -598,12 +606,12 @@ public class PowerSigns extends JavaPlugin
 		return true;
 	}
 	
-	public boolean tryActivate(Block startBlock, BlockFace forward)
+	public boolean tryActivate(Block startBlock, BlockFace forward, boolean all)
 	{
 		boolean didSomething = false;
 		for (Block block : matchingBlocksInLine(startBlock, forward, signMaterials))
 		{
-			if (!tryPowerSign(block))
+			if (!tryPowerSign(block) && !all)
 				break;
 			didSomething = true;
 		}
@@ -705,14 +713,14 @@ public class PowerSigns extends JavaPlugin
 		return true;
 	}
 	
-	public boolean tryInvPut(Block invBlock, Block startBlock, BlockFace forward, Material[] materials, int amount)
+	public boolean tryInvPush(Block invBlock, Block startBlock, BlockFace forward, Material[] materials, int amount)
 	{
 		Inventory inventory;
 		BlockState state = invBlock.getState();
 		if (state instanceof ContainerBlock)
 			inventory = ((ContainerBlock)state).getInventory();
 		else
-			return debugFail("bad inv block");
+			return debugFail("bad inv:"+invBlock.getType().toString());
 		
 		Material putMaterial = null;
 		ItemStack[] items = inventory.getContents();
@@ -736,11 +744,19 @@ public class PowerSigns extends JavaPlugin
 		if (putMaterial == null)
 			return debugFail("not enough items");
 		
-		if (countEmpty(startBlock, forward, amount) != -1) // -1 means count hit max
-			return debugFail("not enough space");
-		
-		
 		BlockLineIterator line = blocksInLine(startBlock, forward);
+		
+		for (int x = amount; x > 0; x--)
+		{
+			if (isEmpty(line.next()))
+				continue;
+			if (!tryPushBlocks(line.currentBlock, forward, materials, x))
+				return debugFail("couldn't push");
+			break;
+		}
+		
+		
+		line = blocksInLine(startBlock, forward);
 		
 		
 		for (int i = 0; i < items.length; i++)
@@ -773,6 +789,42 @@ public class PowerSigns extends JavaPlugin
 		
 		
 		return true;
+	}
+	
+	public boolean tryInvPull(Block invBlock, Block startBlock, BlockFace forward, Material[] materials, int amount)
+	{
+		Inventory inventory;
+		BlockState state = invBlock.getState();
+		if (state instanceof ContainerBlock)
+			inventory = ((ContainerBlock)state).getInventory();
+		else
+			return debugFail("bad inv:"+invBlock.getType().toString());
+		
+		
+		BlockLineIterator line = blocksInLine(startBlock, forward);
+		
+		for (int i = 0; i < amount; i++)
+		{
+			if (!matchesMaterials(line.next(), materials))
+				return debugFail("not matching");
+		}
+		
+		
+		line = blocksInLine(startBlock, forward);
+		
+		
+		for (int i = 0; i < amount; i++)
+		{
+			Block block = line.next();
+			ItemStack itemStack = new ItemStack(block.getType(), 1, (short)0, (Byte)block.getData());
+			
+			if (!inventory.addItem(itemStack).isEmpty())
+				return debugFail("inv full");
+			
+			block.setTypeIdAndData(0, (byte)0, true);
+		}
+		
+		return tryPullBlocks(startBlock, forward, materials, amount);
 	}
 	
 	//////////////////////// Block Iterator Methods ///////////////////////////////
@@ -869,6 +921,32 @@ public class PowerSigns extends JavaPlugin
 
     //////////////////////// Simple Helper Methods //////////////////////// 
 	// / These are helper methods I wish were added to their respective classes
+	
+	public static String join(String... strings)
+	{
+		StringBuilder b = new StringBuilder();
+		for(String string : strings)
+			b.append(string);
+		return b.toString();
+	}
+	
+	public static String joinBy(String sep, String... strings)
+	{
+		StringBuilder b = new StringBuilder();
+		boolean first = true;
+		for(String string : strings)
+		{
+			if (first)
+			{
+				first = false;
+				b.append(string);
+				continue;
+			}
+			b.append(string);
+			b.append(sep);
+		}
+		return b.toString();
+	}
 	
 	public static boolean hasItems(ItemStack[] reqItems, Inventory inventory)
 	{
