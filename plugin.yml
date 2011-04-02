@@ -1,3 +1,15 @@
 name: PowerSigns
 main: com.ricochet1k.bukkit.powersigns.PowerSigns
 version: 0.5
+authors: [ricochet1k, KoryuObihiro]
+description: |
+    Give your signs Power!
+
+commands:
+  powersigns:
+    aliases: [psigns, ps]
+    description: Allows control of PowerSigns.
+    usage: |
+           /<command> (debug) (snow[balls] | rightclick | rc) [on|off]
+           Example: /<command> debug snow | Toggles debugging snowballs
+           Example: /<command> debug rightclick on | Enables right-click debugging of PowerSigns.

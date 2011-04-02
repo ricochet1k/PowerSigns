@@ -12,6 +12,7 @@ import net.minecraft.server.EntityTNTPrimed;
 import net.minecraft.server.TileEntity;
 import net.minecraft.server.World;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -19,15 +20,22 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ContainerBlock;
 import org.bukkit.block.Sign;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.CraftChunk;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.block.CraftDispenser;
 import org.bukkit.craftbukkit.block.CraftSign;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import com.nijiko.permissions.PermissionHandler;
+import com.nijikokun.bukkit.Permissions.Permissions;
 
 
 
@@ -36,7 +44,7 @@ public class PowerSigns extends JavaPlugin
 	////////////// Settings /////////////////
 	
 	// General settings
-	public static int maxDistance = 25;
+	public static int maxDistance = 50;
 	
 	// Cannon settings
 	public static int powerPerTNT = 50; // use up multiple TNT's for more power
@@ -48,13 +56,21 @@ public class PowerSigns extends JavaPlugin
 	// junk
 	public static final Logger log = Logger.getLogger("Minecraft");
 	public final PowerSignsBlockListener blockListener = new PowerSignsBlockListener(this);
+	public final PowerSignsPlayerListener playerListener = new PowerSignsPlayerListener(this);
 	public static final Random random = new Random();
+	
+	public static PermissionHandler Permissions = null;
 
 	@Override
 	public void onEnable()
 	{
 		log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName());
 		getServer().getPluginManager().registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Highest, this);
+		
+		// Once Bukkit has support for unregistering events this should be handled in setDebugRightClick
+		getServer().getPluginManager().registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
+		
+		setupPermissions();
 	}
 
 	@Override
@@ -62,7 +78,126 @@ public class PowerSigns extends JavaPlugin
 	{
 		log.info("["+getDescription().getName()+"] Disabling PowerSigns");
 	}
-
+	
+	private void setupPermissions()
+	{
+		if (PowerSigns.Permissions == null)
+		{
+			Plugin test = getServer().getPluginManager().getPlugin("Permissions");
+			
+			if (test != null)
+			{
+				PowerSigns.Permissions = ((Permissions)test).getHandler();
+			}
+			else
+			{
+				log.info("Permissions not found for PowerSigns...");
+			}
+		}
+	}
+	
+	public static boolean hasPermission(Player player, String permission)
+	{
+		if (PowerSigns.Permissions != null)
+		{
+			if (PowerSigns.Permissions.has(player, permission))
+				return true;
+			else
+				return false;
+		}
+		return player.isOp();
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
+	{
+		Player player = null;
+		
+		log.info("got command: "+ sender.toString());
+		
+		if (label.equalsIgnoreCase("PowerSigns") || label.equalsIgnoreCase("ps"))
+		{
+			// §
+			if (sender instanceof Player)
+				player = (Player)sender;
+			
+			if (args.length == 0)
+			{
+				//sendUsage(player);
+				player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns (debug) ...");
+				return true;
+			}
+			
+			if (args.length > 0)
+			{
+				if (args[0].equalsIgnoreCase("debug"))
+				{
+					if (args.length == 1)
+					{
+						player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug (snow[balls] | rightclick | rc) ...");
+						return true;
+					}
+					
+					if (args[1].equalsIgnoreCase("snowballs") || args[1].equalsIgnoreCase("snow"))
+					{
+						if (!hasPermission(player, "powersigns.debug.snowballs"))
+						{
+							player.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+							return true;
+						}
+						
+						if (args.length > 2)
+						{
+							if (args[2].equalsIgnoreCase("on"))
+								setDebugSnowballs(true);
+							else if (args[2].equalsIgnoreCase("off"))
+								setDebugSnowballs(false);
+							else
+							{
+								player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug snow[balls] [on|off]");
+								return true;
+							}
+						}
+						else
+							setDebugSnowballs(!debugSnowballs);
+						
+						player.sendMessage(ChatColor.GREEN + "Debugging snowballs " + (debugSnowballs? "enabled." : "disabled."));
+						return true;
+					}
+					else if (args[1].equalsIgnoreCase("rightclick") || args[1].equalsIgnoreCase("rc"))
+					{
+						if (!hasPermission(player, "powersigns.debug.rightclick"))
+						{
+							player.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+							return true;
+						}
+						
+						if (args.length > 2)
+						{
+							if (args[2].equalsIgnoreCase("on"))
+								setDebugRightClick(true);
+							else if (args[2].equalsIgnoreCase("off"))
+								setDebugRightClick(false);
+							else
+							{
+								player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug rightclick [on|off]");
+								return true;
+							}
+						}
+						else
+							setDebugRightClick(!debugRightClick);
+						
+						player.sendMessage(ChatColor.GREEN + "Debugging right click " + (debugRightClick? "enabled." : "disabled."));
+						return true;
+					}
+				}
+			}
+			
+		}
+		
+		return false;
+	}
+	
 	static final Material[] signMaterials = new Material[] { Material.SIGN_POST, Material.WALL_SIGN };
 	
 	
@@ -80,21 +215,13 @@ public class PowerSigns extends JavaPlugin
 	static final Pattern pullPattern = Pattern.compile(joinBy("\\s*","!pull",repeatPart,verticalPart,moveDirPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern detectPattern = Pattern.compile(joinBy("\\s*","!detect",verticalPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern linemovePattern = Pattern.compile(joinBy("\\s*","!line(copy|swap)"), Pattern.CASE_INSENSITIVE);
-	static final Pattern activatePattern = Pattern.compile(joinBy("\\s*","!activate",allPart, verticalPart), Pattern.CASE_INSENSITIVE);
+	static final Pattern activatePattern = Pattern.compile(joinBy("\\s*","!activate", allPart, verticalPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern activateLongPattern = Pattern.compile(joinBy("\\s*","!activate_long",verticalPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern cannonPattern = Pattern.compile(joinBy("\\s*","!cannon",cannonTypePart,verticalPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern invpushPattern = Pattern.compile(joinBy("\\s*","!invpush",repeatPart,verticalPart,directionPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern invpullPattern = Pattern.compile(joinBy("\\s*","!invpull",repeatPart,verticalPart,directionPart), Pattern.CASE_INSENSITIVE);
 	
 	static final Pattern lineSpecPattern = Pattern.compile("([fblruds])([1234]) ([fblruds])([1234])", Pattern.CASE_INSENSITIVE);
-	
-	String failMsg = "";
-	protected boolean debugFail(String msg)
-	{
-		if (failMsg == null || failMsg.length() == 0)
-			failMsg = msg;
-		return false; // so you can return debugFail("...")
-	}
 	
 	public static String[] matchPatterns(String input, Pattern... patterns)
 	{
@@ -195,9 +322,14 @@ public class PowerSigns extends JavaPlugin
 			{
 				BlockFace signDir = getSignDirection(signBlock);
 				BlockFace forward = getForward(signDir, m.group(2));
-				Block startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
-
-				ret = tryActivate(startBlock, forward, m.group(1).equals("all"));
+				Block startBlock;
+				if (forward.equals(signDir) && !signBlock.getType().equals(Material.WALL_SIGN))
+					startBlock = getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+				else
+					startBlock = signBlock.getFace(forward, 1);
+				
+				log.info("activate: "+m + "  " + forward);
+				ret = tryActivate(startBlock, forward, m.group(1) != null);
 			}
 			else if (m.usePattern(activateLongPattern).matches())
 			{
@@ -345,44 +477,6 @@ public class PowerSigns extends JavaPlugin
 		return false;
 	}
 	
-	public void doDebugging(Block block, int num)
-	{
-		if (block == null)
-		{
-			log.warning("null debug block");
-			return;
-		}
-		if (num > 0)
-		{
-    		Location loc = block.getLocation();
-    		CraftWorld cworld = ((CraftWorld) block.getWorld());
-    		for (int i = 0; i < num; i++)
-    		{
-        		EntitySnowball snowball = new EntitySnowball(cworld.getHandle(), loc.getX()+0.5d, loc.getY()+1.0d, loc.getZ()+0.5d);
-        		snowball.a(0.0d, 1.0d, 0.0d, 0.2f + 0.03f*(float)i, 4.0f);
-        		cworld.getHandle().a(snowball);
-    		}
-		} else
-			failMsg = "";
-		
-		BlockState state = block.getState();
-		if (state instanceof Sign)
-		{
-			Sign sign = ((Sign) state);
-			if (sign.getLine(2).equals("stacktrace"))
-			{
-				sign.setLine(2, "");
-				(new Throwable("Stacktrace")).fillInStackTrace().printStackTrace();
-			}
-			else if (sign.getLine(2).equals("debug"))
-			{
-				sign.setLine(3, failMsg);
-			}
-			sign.update(true);
-			failMsg = "";
-		}
-	}
-
 	public void moveBlockLine(BlockLineIterator fromLine, BlockLineIterator toLine, int howMany)
 	{
 		if (fromLine == toLine || fromLine.nextBlock == toLine.nextBlock)
@@ -451,6 +545,79 @@ public class PowerSigns extends JavaPlugin
 	}
 	
 
+	// //////////////////////// Debugging Stuff ///////////////////////////
+	
+	// Debug settings
+	public static boolean debugSnowballs = false;
+	public static boolean debugRightClick = false;
+	
+	
+	
+	String failMsg = "";
+	
+	protected boolean debugFail(String msg)
+	{
+		if (failMsg == null || failMsg.length() == 0)
+			failMsg = msg;
+		return false; // so you can return debugFail("...")
+	}
+	
+	public void doDebugging(Block block, int num)
+	{
+		if (block == null)
+		{
+			log.warning("null debug block");
+			return;
+		}
+		if (debugSnowballs && num > 0)
+		{
+    		Location loc = block.getLocation();
+    		CraftWorld cworld = ((CraftWorld) block.getWorld());
+    		for (int i = 0; i < num; i++)
+    		{
+        		EntitySnowball snowball = new EntitySnowball(cworld.getHandle(), loc.getX()+0.5d, loc.getY()+1.0d, loc.getZ()+0.5d);
+        		snowball.a(0.0d, 1.0d, 0.0d, 0.2f + 0.03f*(float)i, 4.0f);
+        		cworld.getHandle().a(snowball);
+    		}
+		}
+		//else
+		//	failMsg = "";
+		
+		BlockState state = block.getState();
+		if (state instanceof Sign)
+		{
+			Sign sign = ((Sign) state);
+			if (sign.getLine(2).equals("stacktrace"))
+			{
+				sign.setLine(2, "");
+				(new Throwable("Stacktrace")).fillInStackTrace().printStackTrace();
+			}
+			else if (sign.getLine(2).equals("debug"))
+			{
+				sign.setLine(3, failMsg);
+			}
+			sign.update(true);
+			//failMsg = "";
+		}
+	}
+	
+	public void setDebugSnowballs(boolean debug)
+	{
+		debugSnowballs = debug;
+	}
+	
+	public void setDebugRightClick(boolean debug)
+	{
+		/// Once Bukkit has support for unregistering events this will work.
+		
+		//if (debugRightClick && !debug)
+		//	getServer().getPluginManager().registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
+		//else
+		//	getServer().getPluginManager().unregisterEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
+		
+		debugRightClick = debug;
+	}
+	
 	// //////////////////////// Action Methods ///////////////////////////
 
 	public boolean tryPushBlocks(Block startBlock, BlockFace forward, Material[] materials, int amount)
@@ -612,9 +779,14 @@ public class PowerSigns extends JavaPlugin
 		for (Block block : matchingBlocksInLine(startBlock, forward, signMaterials))
 		{
 			if (!tryPowerSign(block) && !all)
+			{
+				debugFail("sign fail");
 				break;
+			}
+				
 			didSomething = true;
 		}
+		debugFail("no match");
 		return didSomething;
 	}
 
@@ -624,9 +796,12 @@ public class PowerSigns extends JavaPlugin
 		skipEmpty(line);
 		if (matchesMaterials(line.currentBlock, signMaterials))
 		{
-			return tryPowerSign(line.currentBlock);
+			if (tryPowerSign(line.currentBlock))
+				return true;
+			else
+				return debugFail("sign fail");
 		}
-		return false;
+		return debugFail("no match");
 	}
 	
 	static final Pattern cannonBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})(?:\\s+(ns))?");
@@ -824,7 +999,8 @@ public class PowerSigns extends JavaPlugin
 			block.setTypeIdAndData(0, (byte)0, true);
 		}
 		
-		return tryPullBlocks(startBlock, forward, materials, amount);
+		tryPullBlocks(startBlock, forward, materials, amount);
+		return true;
 	}
 	
 	//////////////////////// Block Iterator Methods ///////////////////////////////
@@ -942,8 +1118,8 @@ public class PowerSigns extends JavaPlugin
 				b.append(string);
 				continue;
 			}
-			b.append(string);
 			b.append(sep);
+			b.append(string);
 		}
 		return b.toString();
 	}
