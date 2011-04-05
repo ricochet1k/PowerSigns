@@ -1,5 +1,7 @@
 package com.ricochet1k.bukkit.powersigns;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -26,6 +28,7 @@ import org.bukkit.craftbukkit.CraftChunk;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.block.CraftDispenser;
 import org.bukkit.craftbukkit.block.CraftSign;
+import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
@@ -33,11 +36,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
-
-
 
 public class PowerSigns extends JavaPlugin
 {
@@ -49,6 +51,9 @@ public class PowerSigns extends JavaPlugin
 	// Cannon settings
 	public static int powerPerTNT = 50; // use up multiple TNT's for more power
 	public static int maxCannonPower = 200;
+	
+	// Fling settings
+	public static int maxFlingPower = 900;
 	
 	//////////// End Settings ////////////
 	
@@ -64,13 +69,23 @@ public class PowerSigns extends JavaPlugin
 	@Override
 	public void onEnable()
 	{
-		log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName());
+		Plugin test = getServer().getPluginManager().getPlugin("Permissions");
+		if (test != null)
+		{
+			PowerSigns.Permissions = ((Permissions)test).getHandler();
+			log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName() + " [Permissions active]");
+		}
+		else
+		{
+			log.info("Permissions not found for PowerSigns...");
+			log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName() + "[Permissions not found]");
+		}
+		
 		getServer().getPluginManager().registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Highest, this);
 		
 		// Once Bukkit has support for unregistering events this should be handled in setDebugRightClick
 		getServer().getPluginManager().registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
-		
-		setupPermissions();
+	
 	}
 
 	@Override
@@ -79,31 +94,13 @@ public class PowerSigns extends JavaPlugin
 		log.info("["+getDescription().getName()+"] Disabling PowerSigns");
 	}
 	
-	private void setupPermissions()
-	{
-		if (PowerSigns.Permissions == null)
-		{
-			Plugin test = getServer().getPluginManager().getPlugin("Permissions");
-			
-			if (test != null)
-			{
-				PowerSigns.Permissions = ((Permissions)test).getHandler();
-			}
-			else
-			{
-				log.info("Permissions not found for PowerSigns...");
-			}
-		}
-	}
-	
 	public static boolean hasPermission(Player player, String permission)
 	{
 		if (PowerSigns.Permissions != null)
 		{
-			if (PowerSigns.Permissions.has(player, permission))
+			if (PowerSigns.Permissions.has(player, permission)) 
 				return true;
-			else
-				return false;
+			else return false;
 		}
 		return player.isOp();
 	}
@@ -113,13 +110,19 @@ public class PowerSigns extends JavaPlugin
 	{
 		Player player = null;
 		
-		log.info("got command: "+ sender.toString());
+		log.info("["+getDescription().getName()+"]" + "got command: "+ sender.toString());
 		
 		if (label.equalsIgnoreCase("PowerSigns") || label.equalsIgnoreCase("ps"))
 		{
 			// §
 			if (sender instanceof Player)
 				player = (Player)sender;
+			else
+			{
+				log.info("Error: That command must be used by a player.");
+				return false;
+			}
+				
 			
 			if (args.length == 0)
 			{
@@ -128,16 +131,19 @@ public class PowerSigns extends JavaPlugin
 				return true;
 			}
 			
+			
 			if (args.length > 0)
 			{
 				if (args[0].equalsIgnoreCase("debug"))
 				{
+					//improper arguments, display syntax
 					if (args.length == 1)
 					{
-						player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug (snow[balls] | rightclick | rc) ...");
+						player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug (snow[balls] | rightclick | rc ...");
 						return true;
 					}
 					
+					//snowball debugging
 					if (args[1].equalsIgnoreCase("snowballs") || args[1].equalsIgnoreCase("snow"))
 					{
 						if (!hasPermission(player, "powersigns.debug.snowballs"))
@@ -164,6 +170,7 @@ public class PowerSigns extends JavaPlugin
 						player.sendMessage(ChatColor.GREEN + "Debugging snowballs " + (debugSnowballs? "enabled." : "disabled."));
 						return true;
 					}
+					//right-click debugging
 					else if (args[1].equalsIgnoreCase("rightclick") || args[1].equalsIgnoreCase("rc"))
 					{
 						if (!hasPermission(player, "powersigns.debug.rightclick"))
@@ -174,10 +181,8 @@ public class PowerSigns extends JavaPlugin
 						
 						if (args.length > 2)
 						{
-							if (args[2].equalsIgnoreCase("on"))
-								setDebugRightClick(true);
-							else if (args[2].equalsIgnoreCase("off"))
-								setDebugRightClick(false);
+							if (args[2].equalsIgnoreCase("on")) setDebugRightClick(true);
+							else if (args[2].equalsIgnoreCase("off")) setDebugRightClick(false);
 							else
 							{
 								player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug rightclick [on|off]");
@@ -220,7 +225,7 @@ public class PowerSigns extends JavaPlugin
 	static final Pattern cannonPattern = Pattern.compile(joinBy("\\s*","!cannon",cannonTypePart,verticalPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern invpushPattern = Pattern.compile(joinBy("\\s*","!invpush",repeatPart,verticalPart,directionPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern invpullPattern = Pattern.compile(joinBy("\\s*","!invpull",repeatPart,verticalPart,directionPart), Pattern.CASE_INSENSITIVE);
-	
+	static final Pattern flingPattern = Pattern.compile(joinBy("\\s*","!fling",allPart, directionPart), Pattern.CASE_INSENSITIVE);
 	static final Pattern lineSpecPattern = Pattern.compile("([fblruds])([1234]) ([fblruds])([1234])", Pattern.CASE_INSENSITIVE);
 	
 	public static String[] matchPatterns(String input, Pattern... patterns)
@@ -289,6 +294,7 @@ public class PowerSigns extends JavaPlugin
 				
 				ret = tryPushBlocks(startBlock, forward, moveTypes, repeat);
 			}
+			//match to !pull
 			else if (m.usePattern(pullPattern).matches())
 			{
 				final int repeat = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : 1;
@@ -303,6 +309,7 @@ public class PowerSigns extends JavaPlugin
 				
 				ret = tryPullBlocks(startBlock, forward, moveTypes, repeat);
 			}
+			//match to !detect
 			else if (m.usePattern(detectPattern).matches())
 			{
 				BlockFace signDir = getSignDirection(signBlock);
@@ -312,12 +319,14 @@ public class PowerSigns extends JavaPlugin
 				signState.setLine(1, startBlock.getType().toString().toLowerCase());
 				return true;
 			}
+			
 			else if (m.usePattern(linemovePattern).matches())
 			{
 				BlockFace signDir = getSignDirection(signBlock);
 				
 				ret = tryLineAction(m.group(1), signState.getLine(1), signBlock, signDir);
 			}
+			//match to !activate
 			else if (m.usePattern(activatePattern).matches())
 			{
 				BlockFace signDir = getSignDirection(signBlock);
@@ -328,7 +337,7 @@ public class PowerSigns extends JavaPlugin
 				else
 					startBlock = signBlock.getFace(forward, 1);
 				
-				log.info("activate: "+m + "  " + forward);
+				//log.info("["+getDescription().getName()+"]" + "activate: "+m + "  " + forward);
 				ret = tryActivate(startBlock, forward, m.group(1) != null);
 			}
 			else if (m.usePattern(activateLongPattern).matches())
@@ -381,6 +390,27 @@ public class PowerSigns extends JavaPlugin
 				
 				ret = tryInvPull(signBlock.getFace(dir), startBlock, forward, moveTypes, repeat);
 			}
+			else if (m.usePattern(flingPattern).matches())
+			{
+				BlockFace signDir = getSignDirection(signBlock);
+				boolean applyAll;
+				try
+				{
+					applyAll = (m.group(1).equals("all"));
+				}
+				catch(Exception e)
+				{
+					applyAll = false;
+				}
+				BlockFace flingDir = strToDirection(m.group(2), signDir);
+				if(flingDir.equals(BlockFace.UP) 
+						|| flingDir.equals(BlockFace.DOWN) 
+						|| flingDir.equals(BlockFace.SELF)
+						|| flingDir == null)
+					flingDir = signDir;
+			    
+				ret = tryFlingSign(signBlock, signDir, flingDir, applyAll);
+			}
 			else
 			{ debugFail("syntax"); doDebugging(signBlock, 2); return false; }
 			
@@ -406,9 +436,7 @@ public class PowerSigns extends JavaPlugin
 		{
 			if (verticalStr.equals("u"))
 				return BlockFace.UP;
-			else
-				// if (verticalStr.equals("d"))
-				return BlockFace.DOWN;
+			return BlockFace.DOWN;
 		}
 
 		return signDir;
@@ -425,29 +453,23 @@ public class PowerSigns extends JavaPlugin
 
 	public static BlockFace getDirection(String directionStr, BlockFace signDir, String verticalStr)
 	{
-		if (directionStr == null)
-			return null;
+		if (directionStr == null) return null;
 
+		//parse perpendicular move-type sign modifiers
 		if (directionStr.equals("^"))
 		{
-			if (verticalStr == null)
-				return BlockFace.UP;
-			else
-				return signDir;
+			if (verticalStr == null) return BlockFace.UP;
+			else return signDir;
 		}
-		else if (directionStr.equals("v"))
+		if (directionStr.equals("v"))
 		{
-			if (verticalStr == null)
-				return BlockFace.DOWN;
-			else
-				return getOppositeFace(signDir);
+			if (verticalStr == null) return BlockFace.DOWN;
+			else return getOppositeFace(signDir);
 		}
-		else if (directionStr.equals("<"))
-			return rotateFaceLeft(signDir);
-		else if (directionStr.equals(">"))
-			return rotateFaceRight(signDir);
+		if (directionStr.equals("<")) return rotateFaceLeft(signDir);
+		if (directionStr.equals(">")) return rotateFaceRight(signDir);
 
-		return null;
+		return null;//shouldn't get to this point
 	}
 
 	public static Material[] getMaterials(String materialsStr)
@@ -526,20 +548,13 @@ public class PowerSigns extends JavaPlugin
 
 	public BlockFace strToDirection(String s, BlockFace forward)
 	{
-		if (s.equals("f"))
-			return forward;
-		else if (s.equals("b"))
-			return getOppositeFace(forward);
-		else if (s.equals("l"))
-			return rotateFaceLeft(forward);
-		else if (s.equals("r"))
-			return rotateFaceRight(forward);
-		else if (s.equals("u"))
-			return BlockFace.UP;
-		else if (s.equals("d"))
-			return BlockFace.DOWN;
-		else if (s.equals("s"))
-			return BlockFace.SELF;
+		if (s.equals("f")) 		return forward;
+		else if (s.equals("b")) return getOppositeFace(forward);
+		else if (s.equals("l")) return rotateFaceLeft(forward);
+		else if (s.equals("r")) return rotateFaceRight(forward);
+		else if (s.equals("u")) return BlockFace.UP;
+		else if (s.equals("d")) return BlockFace.DOWN;
+		else if (s.equals("s")) return BlockFace.SELF;
 		else
 			return null;
 	}
@@ -566,7 +581,7 @@ public class PowerSigns extends JavaPlugin
 	{
 		if (block == null)
 		{
-			log.warning("null debug block");
+			log.warning("["+getDescription().getName()+"]" + "null debug block");
 			return;
 		}
 		if (debugSnowballs && num > 0)
@@ -648,7 +663,7 @@ public class PowerSigns extends JavaPlugin
 		BlockFace backward = getOppositeFace(forward);
 		if (backward == null)
 		{
-			log.severe("backward == null!! forward: "+forward.toString());
+			log.severe("["+getDescription().getName()+"]" + "backward == null!! forward: "+forward.toString());
 			return debugFail("backward == null");
 		}
 
@@ -704,7 +719,7 @@ public class PowerSigns extends JavaPlugin
 			BlockFace dir = strToDirection(m.group(1 + 2 * i), forward);
 			if (dir == null)
 			{
-				log.warning("Bad direction: " + m.group(1 + 2 * i));
+				log.warning("["+getDescription().getName()+"]" + "Bad direction: " + m.group(1 + 2 * i));
 				return false; // Shouldn't happen
 			}
 			
@@ -732,7 +747,7 @@ public class PowerSigns extends JavaPlugin
 			}
 			else
 			{
-				log.info("Bad block: " + found.getType().toString());
+				log.info("["+getDescription().getName()+"]" + "Bad block: " + found.getType().toString());
 				return false;
 			}
 
@@ -807,6 +822,7 @@ public class PowerSigns extends JavaPlugin
 	static final Pattern cannonBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})(?:\\s+(ns))?");
 	public boolean tryCannonSign(Block dispenserBlock, BlockFace forward, String ballisticsLine, String type)
 	{
+		int minCost = 1;
 		//Sign signState = (Sign) signBlock.getState();
 
 		// get the information about the ballistics for the TNT projectile on the second line
@@ -817,7 +833,7 @@ public class PowerSigns extends JavaPlugin
 		
 		if (power > maxCannonPower)
 		{
-			//log.info("Power input exceeded - limit is " + maxCannonPower);
+			//log.info("["+getDescription().getName()+"]" + "Power input exceeded - limit is " + maxCannonPower);
 			power = maxCannonPower;
 		}
 		double powerd = power / 100.0;
@@ -842,12 +858,12 @@ public class PowerSigns extends JavaPlugin
 		ItemStack[] neededItems;
 		if (type == null || type.equals("tnt"))
 		{
-			neededItems = new ItemStack[] {new ItemStack(Material.TNT, 1 + tntCost)};
+			neededItems = new ItemStack[] {new ItemStack(Material.TNT, minCost + tntCost)};
 		}
 		else
 		{
 			entityMaterial = Material.matchMaterial(type);
-			neededItems = new ItemStack[] {new ItemStack(Material.TNT, tntCost), new ItemStack(entityMaterial, 1)};
+			neededItems = new ItemStack[] {new ItemStack(Material.TNT, tntCost), new ItemStack(entityMaterial, minCost)};
 		}
 		if (!tryRemoveItems(neededItems, ((CraftDispenser)dispenserBlock.getState()).getInventory()))
 			return debugFail("not enough items");
@@ -860,12 +876,13 @@ public class PowerSigns extends JavaPlugin
     		projectile = new EntityTNTPrimed(cWorld.getHandle(), placeHere.getX() + 0.5f, placeHere.getY() + 0.5f,
     		                placeHere.getZ() + 0.5f);
 		}
-		else
+		else if (type.equals("sand") || type.equals("gravel"))
 		{
 			projectile = new EntityFallingSand(cWorld.getHandle(), placeHere.getX() + 0.5f, placeHere.getY() + 0.5f,
     		                placeHere.getZ() + 0.5f, entityMaterial.getId());
 		}
-
+		else
+			return false; //shouldn't happen unless they try an invalid type
 		// some messy vector math for the ballistics input
 		double vector_x = powerd * Math.cos(angle * Math.PI / 180) * (placeHere.getX() - dispenserBlock.getX());
 		double vector_y = powerd * Math.sin(angle * Math.PI / 180);
@@ -1003,6 +1020,71 @@ public class PowerSigns extends JavaPlugin
 		return true;
 	}
 	
+	public boolean tryFlingSign(Block signBlock, BlockFace signDirection, BlockFace flingDirection, boolean applyAll)
+	{
+		//get the target area
+		Block targArea = signBlock.getFace(signDirection, 1);
+		if(signBlock.getType().equals(Material.WALL_SIGN))
+			targArea = targArea.getFace(signDirection, 1);
+		
+		//check the target area is empty
+		Sign signState = (Sign)signBlock.getState();
+		String ballisticsLine = signState.getLine(1);
+		if (!isFlingable(targArea))
+			return debugFail("target blocked");
+		
+		//get the ballistics
+		final Pattern flingBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})(?:\\s+(ns))?");
+		Matcher m = flingBallisticsPattern.matcher(ballisticsLine);
+		if (!m.matches())
+			return debugFail("parse ballistics");
+		int power = Integer.parseInt(m.group(1));
+		if (power > maxFlingPower)
+			power = maxFlingPower;
+		double powerd = power / 100.0;
+		double angle = Integer.parseInt(m.group(2));
+		if (Math.abs(angle) > 90)
+			return debugFail("bad angle: " + Double.toString(angle));
+		boolean launched = false;
+		
+		//use int modifiers to fling in the right direction later
+		int x = 0, z = 0;
+		if(flingDirection == BlockFace.NORTH) x = -1;
+		else if(flingDirection == BlockFace.WEST) z = 1;
+		else if(flingDirection == BlockFace.SOUTH) x = 1;
+		else if(flingDirection == BlockFace.EAST) z = -1;
+		
+		for(org.bukkit.entity.Entity ent : ((CraftWorld)targArea.getWorld()).getEntities())
+		{
+			
+			if(((int)ent.getLocation().getX() == (int)targArea.getLocation().getX()+1
+					&& (int)ent.getLocation().getY() == (int)targArea.getLocation().getY()
+					&& (int)ent.getLocation().getZ() == (int)targArea.getLocation().getZ())
+					|| applyAll)	
+			{
+				
+				try
+				{
+					ent.setVelocity(new Vector(0, 0, 0).toBlockVector());
+					ent.setVelocity(new Vector(
+							(powerd * Math.cos(angle * Math.PI / 180) * x),
+							powerd * Math.sin(angle * Math.PI / 180),
+							(powerd * Math.cos(angle * Math.PI / 180) * z)).toBlockVector());
+					
+					launched = true;
+					((Player)ent).sendMessage("You got launched with vel: ");
+					((Player)ent).sendMessage("x="	+ (powerd * Math.cos(angle * Math.PI / 180) * x));
+					((Player)ent).sendMessage(" y=" + powerd * Math.sin(angle * Math.PI / 180));
+					((Player)ent).sendMessage(" z=" + (powerd * Math.cos(angle * Math.PI / 180) * z));
+				}
+				catch(Exception e){}
+			}
+		}
+		if(!launched)
+			return debugFail("no target");
+		return true;
+	}
+	
 	//////////////////////// Block Iterator Methods ///////////////////////////////
 
 	public static BlockLineIterator blocksInLine(Block start, BlockFace dir)
@@ -1127,21 +1209,17 @@ public class PowerSigns extends JavaPlugin
 	public static boolean hasItems(ItemStack[] reqItems, Inventory inventory)
 	{
 		int[] itemCounts = new int[reqItems.length];
+		
 		for (ItemStack item : inventory.getContents())
 		{
 			for (int i = 0; i < reqItems.length; i++)
-			{
 				if (reqItems[i].getType().equals(item.getType()))
-				{
 					itemCounts[i] += item.getAmount();
-				}
-			}
 		}
+		
 		for (int i = 0; i < reqItems.length; i++)
-		{
 			if (reqItems[i].getAmount() > itemCounts[i])
     			return false;
-		}
 		return true;
 	}
 	
@@ -1153,28 +1231,37 @@ public class PowerSigns extends JavaPlugin
 		return true;
 	}
 
-	/**
-	 * Is the block empty? (Air, or flowing water/lava)
-	 * 
-	 * @param block
-	 * @return
-	 */
 	public static boolean isEmpty(Block block)
 	{
-		return (block.getType().equals(Material.AIR) || ((block.getType().equals(Material.STATIONARY_WATER) || block
-		        .getType().equals(Material.STATIONARY_LAVA)) && block.getData() != 0));
+		return (block.getType().equals(Material.AIR) || ((block.getType().equals(Material.STATIONARY_WATER) 
+				|| block.getType().equals(Material.STATIONARY_LAVA)) && block.getData() != 0));
+	}
+	
+	public static boolean isFlingable(Block block)
+	{
+		return (block.getType().equals(Material.AIR)
+				|| block.getType().equals(Material.STONE_BUTTON)
+				|| block.getType().equals(Material.RED_ROSE)
+				|| block.getType().equals(Material.YELLOW_FLOWER)
+				|| block.getType().equals(Material.LEVER)
+				|| block.getType().equals(Material.STONE_PLATE)
+				|| block.getType().equals(Material.WOOD_PLATE)
+				|| block.getType().equals(Material.STONE_BUTTON)
+				|| block.getType().equals(Material.WALL_SIGN)
+				|| block.getType().equals(Material.SIGN_POST)
+				|| block.getType().equals(Material.REDSTONE_WIRE)
+				|| block.getType().equals(Material.REDSTONE_TORCH_OFF)
+				|| block.getType().equals(Material.REDSTONE_TORCH_ON)
+				|| block.getType().equals(Material.DIODE_BLOCK_OFF)
+				|| block.getType().equals(Material.DIODE_BLOCK_ON));
 	}
 
 	public static BlockFace getSignDirection(Block signBlock)
 	{
 		if (signBlock.getType().equals(Material.WALL_SIGN))
-		{
 			return getOppositeFace(getWallSignFacing((Sign) signBlock.getState()));
-		}
 		else if (signBlock.getType().equals(Material.SIGN_POST))
-		{
 			return getOppositeFace(getSignPostFacing((Sign) signBlock.getState()));
-		}
 
 		return null; // not a sign, shouldn't be necessary
 	}
@@ -1187,28 +1274,20 @@ public class PowerSigns extends JavaPlugin
 	
 	public static BlockFace notchToFacing(int notch)
 	{
-		if (notch == 2)
-			return BlockFace.EAST;
-		if (notch == 3)
-			return BlockFace.WEST;
-		if (notch == 4)
-			return BlockFace.NORTH;
-		if (notch == 5)
-			return BlockFace.SOUTH;
+		if (notch == 2) return BlockFace.EAST;
+		if (notch == 3) return BlockFace.WEST;
+		if (notch == 4) return BlockFace.NORTH;
+		if (notch == 5) return BlockFace.SOUTH;
 		return null;
 	}
 
 	public static BlockFace getSignPostFacing(Sign signState)
 	{
 		int direction = signState.getData().getData();
-		if (direction == 0)
-			return BlockFace.WEST;
-		if (direction == 4)
-			return BlockFace.NORTH;
-		if (direction == 8)
-			return BlockFace.EAST;
-		if (direction == 12)
-			return BlockFace.SOUTH;
+		if (direction == 0) return BlockFace.WEST;
+		if (direction == 4) return BlockFace.NORTH;
+		if (direction == 8) return BlockFace.EAST;
+		if (direction == 12)return BlockFace.SOUTH;
 		return null;
 	}
 
@@ -1216,20 +1295,13 @@ public class PowerSigns extends JavaPlugin
 	{
 		switch (face)
 		{
-		case NORTH:
-			return BlockFace.SOUTH;
-		case SOUTH:
-			return BlockFace.NORTH;
-		case EAST:
-			return BlockFace.WEST;
-		case WEST:
-			return BlockFace.EAST;
-		case UP:
-			return BlockFace.DOWN;
-		case DOWN:
-			return BlockFace.UP;
-		default:
-			return null;
+		case NORTH: return BlockFace.SOUTH;
+		case SOUTH: return BlockFace.NORTH;
+		case EAST: 	return BlockFace.WEST;
+		case WEST: 	return BlockFace.EAST;
+		case UP: 	return BlockFace.DOWN;
+		case DOWN: 	return BlockFace.UP;
+		default: 	return null;
 		}
 	}
 
@@ -1237,16 +1309,11 @@ public class PowerSigns extends JavaPlugin
 	{
 		switch (face)
 		{
-		case NORTH:
-			return BlockFace.WEST;
-		case SOUTH:
-			return BlockFace.EAST;
-		case EAST:
-			return BlockFace.NORTH;
-		case WEST:
-			return BlockFace.SOUTH;
-		default:
-			return null;
+		case NORTH: return BlockFace.WEST;
+		case SOUTH: return BlockFace.EAST;
+		case EAST: 	return BlockFace.NORTH;
+		case WEST: 	return BlockFace.SOUTH;
+		default: 	return null;
 		}
 	}
 
@@ -1254,16 +1321,43 @@ public class PowerSigns extends JavaPlugin
 	{
 		switch (face)
 		{
-		case NORTH:
-			return BlockFace.EAST;
-		case SOUTH:
-			return BlockFace.WEST;
-		case EAST:
-			return BlockFace.SOUTH;
-		case WEST:
-			return BlockFace.NORTH;
-		default:
-			return null;
+		case NORTH:	return BlockFace.EAST;
+		case SOUTH:	return BlockFace.WEST;
+		case EAST:	return BlockFace.SOUTH;
+		case WEST:	return BlockFace.NORTH;
+		default: 	return null;
 		}
+	}
+	public static List<Player> getPlayersAtBlock(Block lookHere)
+	{
+		//get a list of players at this block
+		log.info("Searching at " + lookHere.getLocation().toString());
+		CraftWorld cWorld = (CraftWorld)lookHere.getWorld();
+		List<Player> playerList = cWorld.getPlayers();
+		for(Player player : playerList)
+		{
+			player.sendMessage("You are at location " + player.getLocation().toString());
+			if((int)player.getLocation().getX() == (int)lookHere.getLocation().getX())
+			{
+				//playerList.add(player);
+				log.info("Found target player " + player.getName()
+						+ " at " + player.getLocation());
+			}
+			else
+				playerList.remove(player);
+		}
+		return playerList;
+	}
+	
+	public static List<CraftEntity> getEntitiesAtBlock(Block lookHere)
+	{
+		//get a list of players at this block
+		CraftWorld cWorld = (CraftWorld)lookHere.getWorld();
+		List<CraftEntity> entList = Collections.emptyList();
+		for(org.bukkit.entity.Entity ent : cWorld.getEntities())	
+			if(((CraftEntity)ent).getLocation().equals(lookHere.getLocation()))
+				entList.add((CraftEntity)ent);
+
+		return entList;
 	}
 }
