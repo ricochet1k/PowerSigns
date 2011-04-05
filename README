@@ -14,9 +14,13 @@ Cannon: launch a TNT stored in an adjacent Dispenser, specifying an angle and po
 
 swap and copy: sign text manipulation PowerSign
 
+inv(push and pull): push and pull blocks....from a chest or dispenser!
+
+fling: launch yourself into the air 
+
 [Planned:]
 
-Chest: push and pull materials from a chest with a PowerSign
-
 More modifiers for PS instructions
+
+Some bugfixes
 
