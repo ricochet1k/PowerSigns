@@ -20,7 +20,9 @@ fling: launch yourself into the air
 
 [Planned:]
 
-More modifiers for PS instructions
+More modifiers for PS operations
 
-Some bugfixes
+Bugfix for chest push NPE
+
+Syntax help and perms checking
 
