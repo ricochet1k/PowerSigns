@@ -55,6 +55,31 @@ public class PowerSigns extends JavaPlugin
 	// Fling settings
 	public static int maxFlingPower = 900;
 	
+//ADD STUFF TO THIS
+	final String[][] syntaxMessages = {
+		{
+		ChatColor.YELLOW + "Push", 
+		ChatColor.YELLOW + "Pull",  
+		ChatColor.YELLOW + "InvPush",  
+		ChatColor.YELLOW + "InvPull",  
+		ChatColor.YELLOW + "Fling",  
+		ChatColor.YELLOW + "Cannon",  
+		ChatColor.YELLOW + "Linecopy",  
+		ChatColor.YELLOW + "Lineswap"
+		}, 
+		
+		{
+			"powersigns.create.push",
+			"powersigns.create.pull",
+			"powersigns.create.invpush",
+			"powersigns.create.invpull",
+			"powersigns.create.fling",
+			"powersigns.create.cannon",
+			"powersigns.create.line",
+			"powersigns.create.line"
+		}
+		};
+	
 	//////////// End Settings ////////////
 	
 	
@@ -127,7 +152,11 @@ public class PowerSigns extends JavaPlugin
 			if (args.length == 0)
 			{
 				//sendUsage(player);
-				player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns (debug) ...");
+				player.sendMessage(ChatColor.RED + "PowerSigns commands: (alias /ps)");
+				if(PowerSigns.hasPermission(player, "powersigns.debug"))
+					player.sendMessage(ChatColor.RED + "/powersigns debug (snow[balls] | rightclick | rc)");
+				if(PowerSigns.hasPermission(player, "powersigns.syntax"))
+					player.sendMessage(ChatColor.RED + "/powersigns syntax [signtype]");
 				return true;
 			}
 			
@@ -196,13 +225,72 @@ public class PowerSigns extends JavaPlugin
 						return true;
 					}
 				}
+				else if(args[0].equalsIgnoreCase("syntax"))
+				{
+					if(!PowerSigns.Permissions.has(player, "powersigns.syntax"))
+					{
+						player.sendMessage(ChatColor.RED + "You do not have access to this command.");
+						return true;
+					}
+					//open-ended
+					if(args.length == 1)
+					{
+						boolean hasAnything = false;
+						//if !permissions player.sendMessage(ChatColor.RED + "You do not have access to this command.");
+						player.sendMessage(ChatColor.GREEN + "Syntax browsing: /powersigns syntax [sign]");
+						player.sendMessage(ChatColor.GOLD + "Signs available to you:");
+						//show a list of the signs they have access to
+						for(int i = 0; i < syntaxMessages[0].length; i++)
+							//permissions check against corresponding string
+							if(PowerSigns.hasPermission(player, syntaxMessages[1][i]))
+							{
+								player.sendMessage(syntaxMessages[0][i]);
+								hasAnything = true;
+							}
+						player.sendMessage(hasAnything? 
+								(ChatColor.GOLD + "End list.")
+								:(ChatColor.RED + "You don't have access to any PowerSigns!"));
+						return true;				
+					}
+				}
+					//sign-specific syntax
+				else if(args[1].equalsIgnoreCase("reload"))
+				{
+					if(!PowerSigns.hasPermission(player, "powersigns.reload"))
+					{
+						player.sendMessage(ChatColor.RED + "You do not have access to this command.");
+						return true;
+					}
+					reloadPowerSigns();
+				}
+				else if(args[1].equalsIgnoreCase("asdf"))
+				{
+					// TODO find something to do for this. :P
+					return true;
+				}
+				else if((args[0].equalsIgnoreCase("wires"))) //display "wiring status"
+				{
+					if(!PowerSigns.hasPermission(player, "powersigns.wires"))
+					{
+						player.sendMessage(ChatColor.RED + "You do not have access to this command.");
+						return true;
+					}
+//DISPLAY STATUSES FOR GLOBAL WIRE-ON/OFF SETTINGS
+				}
+				//handle incorrect commands
+				else
+					player.sendMessage(ChatColor.RED + "[PowerSigns]Command not found");
 			}
-			
 		}
 		
 		return false;
 	}
 	
+	private void reloadPowerSigns() {
+		// TODO Auto-generated method stub
+		
+	}
+
 	static final Material[] signMaterials = new Material[] { Material.SIGN_POST, Material.WALL_SIGN };
 	
 	
@@ -277,6 +365,7 @@ public class PowerSigns extends JavaPlugin
 
 		try
 		{
+//NEED TO ADD SETTINGS(wire/rc) AND PERMISSIONS(rc-perm checking) NODES FOR THESE
 			boolean ret = false;
 			Matcher m = pushPattern.matcher(command);
 			// Execute the action
