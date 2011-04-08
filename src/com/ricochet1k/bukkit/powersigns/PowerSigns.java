@@ -1011,7 +1011,7 @@ public class PowerSigns extends JavaPlugin
 			int count = 0;
 			for (ItemStack itemStack : items)
 			{
-				if (!itemStack.getType().equals(material))
+				if (itemStack == null || !itemStack.getType().equals(material))
 					continue;
 				count += itemStack.getAmount();
 			}
@@ -1043,7 +1043,7 @@ public class PowerSigns extends JavaPlugin
 		for (int i = 0; i < items.length; i++)
 		{
 			ItemStack itemStack = items[i];
-			if (!itemStack.getType().equals(putMaterial))
+			if (itemStack == null || !itemStack.getType().equals(putMaterial))
 				continue;
 			
 			int iAmount = itemStack.getAmount();
@@ -1301,6 +1301,7 @@ public class PowerSigns extends JavaPlugin
 		
 		for (ItemStack item : inventory.getContents())
 		{
+			if (item == null) continue;
 			for (int i = 0; i < reqItems.length; i++)
 				if (reqItems[i].getType().equals(item.getType()))
 					itemCounts[i] += item.getAmount();
