@@ -17,9 +17,9 @@ public class PowerSignsPlayerListener extends PlayerListener {
 	@Override
 	public void onPlayerInteract(PlayerInteractEvent event)
 	{
-		if (event.getAction() == Action.RIGHT_CLICK_BLOCK && PowerSigns.debugRightClick
+		if (event.getAction() == Action.RIGHT_CLICK_BLOCK && plugin.getDebugRightClick()
 				&& PowerSigns.hasPermission(event.getPlayer(), "powersigns.debug.rightclick")
-				&& PowerSigns.matchesMaterials(event.getClickedBlock(), PowerSigns.signMaterials))
+				&& PowerSigns.materialsMatch(event.getClickedBlock().getType(), PowerSigns.signMaterials))
 		{
 			boolean result = plugin.tryPowerSign(event.getClickedBlock());
 			if (!result)
