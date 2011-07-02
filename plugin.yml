@@ -7,7 +7,7 @@ description: |
 
 commands:
   powersigns:
-    aliases: [psigns, ps]
+    aliases: [ps]
     description: Allows control of PowerSigns.
     usage: |
            /<command> (debug) (snow[balls] | rightclick | rc) [on|off]

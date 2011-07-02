@@ -2,27 +2,28 @@ PowerSigns: give your signs Power!
 
 Quick summary of different PowerSigns:
 
-Push: push an adjacent row of blocks with the material specified by one block, can push any direction but towards the sign itself
+ - push: push an adjacent row of blocks away
 
-Pull: pull on a row of blocks with the material specified from far away towards the sign
+ - pull: pull a row of blocks towards the sign
 
-Activate: attempt to activate a row of signs as if they were other PowerSigns
+ - activate: attempt to activate a single PowerSign or a row of PowerSigns
 
-Activate_long: activates a single sign from a distance
+ - activatelong: activates a single PowerSign from a distance
 
-Cannon: launch a TNT stored in an adjacent Dispenser, specifying an angle and power when launching from the front of the dispenser
+ - activateif: activate a PowerSign if a specific condition is met
 
-swap and copy: sign text manipulation PowerSign
+ - cannon: launch a TNT, sand or gravel block stored in an adjacent Dispenser with a specific angle and power
 
-inv(push and pull): push and pull blocks....from a chest or dispenser!
+ - line: manipulate lines of text on a sign
 
-fling: launch yourself into the air 
+ - invpush and invpull: push and pull blocks to/from a chest or dispenser
 
-[Planned:]
+ - fling: launch entities into the air 
 
-More modifiers for PS operations
+ - toggle: toggle the state of a lever
 
-Bugfix for chest push NPE
+ - detect: report the material name and id of a block
 
-Syntax help and perms checking
+ - dataget and dataset: alter the data of a block
 
+ - math: perform mathematical operations
