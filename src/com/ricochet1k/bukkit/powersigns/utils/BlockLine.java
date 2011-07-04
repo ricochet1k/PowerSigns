@@ -4,13 +4,15 @@ import java.security.InvalidParameterException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import net.minecraft.server.TileEntity;
-import net.minecraft.server.World;
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.craftbukkit.CraftChunk;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ContainerBlock;
+import org.bukkit.block.Furnace;
+import org.bukkit.block.NoteBlock;
+import org.bukkit.block.Sign;
+import org.bukkit.inventory.Inventory;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
@@ -211,18 +213,54 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 		if (from == to)
 			throw new InvalidParameterException("from == to");
 		
-		World world = ((CraftChunk) from.getChunk()).getHandle().world;
+		//World world = ((CraftChunk) from.getChunk()).getHandle().world;
 
-		to.setTypeId(from.getTypeId());
+		to.setTypeId(from.getTypeId(), true); // setTypeIdAndData doesn't set data right
 		to.setData(from.getData());
+		
+		BlockState fromState = from.getState();
+		
+		if (fromState instanceof ContainerBlock)
+		{
+			BlockState toState = to.getState();
+			
+			Inventory fromInv = ((ContainerBlock)fromState).getInventory();
+			Inventory toInv = ((ContainerBlock)toState).getInventory();
+			
+			toInv.setContents(fromInv.getContents());
+			fromInv.clear();
+			
+			if (fromState instanceof Furnace)
+			{
+				((Furnace)toState).setBurnTime(((Furnace)fromState).getBurnTime());
+				((Furnace)toState).setCookTime(((Furnace)fromState).getCookTime());
+			}
+		}
+		else if (fromState instanceof Sign)
+		{
+			Sign fromSign = (Sign)fromState;
+			Sign toSign = (Sign)to.getState();
+			
+			for (int i = 0; i < 4; i++)
+				toSign.setLine(i, fromSign.getLine(i));
+		}
+		else if (fromState instanceof NoteBlock)
+		{
+			NoteBlock fromNote = (NoteBlock)fromState;
+			NoteBlock toNote = (NoteBlock)to.getState();
+			
+			toNote.setRawNote(fromNote.getRawNote());
+		}
 
-		TileEntity tileEntity = world.getTileEntity(from.getX(), from.getY(), from.getZ());
+		/*TileEntity tileEntity = world.getTileEntity(from.getX(), from.getY(), from.getZ());
 
 		if (tileEntity != null)
 		{
-			((CraftChunk) from.getChunk()).getHandle().e(from.getX(), from.getY(), from.getZ()); // delete old tile entity
 			world.setTileEntity(to.getX(), to.getY(), to.getZ(), tileEntity);
-		}
+			
+			// delete old tile entity
+			world.o(from.getX(), from.getY(), from.getZ());
+		}*/
 
 		from.setTypeId(0); // clear from
 	}
