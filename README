@@ -18,7 +18,9 @@ Quick summary of different PowerSigns:
 
  - invpush and invpull: push and pull blocks to/from a chest or dispenser
 
- - fling: launch entities into the air 
+ - invdump and invsuck: create or absorb items into/out of a chest or dispenser
+
+ - fling: launch entities into the air
 
  - toggle: toggle the state of a lever
 
