@@ -67,7 +67,7 @@ public class FlingSignPlugin implements PowerSignsPlugin
 				powerd * Math.cos(angle * Math.PI / 180) * z).toBlockVector();
 		
 		
-		for(Entity ent : PowerSigns.entitiesNearBlock(targArea, 0.7))
+		for(Entity ent : PowerSigns.entitiesNearBlock(targArea, 1.0))
 		{
 			ent.setVelocity(velocity);
 			
