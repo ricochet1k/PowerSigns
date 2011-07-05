@@ -41,6 +41,7 @@ import com.ricochet1k.bukkit.powersigns.plugins.CannonSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.DataAccessSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.DetectSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.FlingSignPlugin;
+import com.ricochet1k.bukkit.powersigns.plugins.InvCountSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.LineOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.MathSignPlugin;
@@ -117,6 +118,7 @@ public class PowerSigns extends JavaPlugin
 		ActivateLongSignPlugin.register();
 		CannonSignPlugin.register();
 		InvOpSignPlugin.register();
+		InvCountSignPlugin.register();
 		FlingSignPlugin.register();
 		DataAccessSignPlugin.register();
 		MathSignPlugin.register();
@@ -594,7 +596,7 @@ public class PowerSigns extends JavaPlugin
     		{
         		EntitySnowball snowball = new EntitySnowball(cworld.getHandle(), loc.getX()+0.5d, loc.getY()+1.0d, loc.getZ()+0.5d);
         		snowball.a(0.0d, 1.0d, 0.0d, 0.2f + 0.03f*(float)i, 4.0f);
-        		cworld.getHandle().a(snowball);
+        		cworld.getHandle().addEntity(snowball);
     		}
 		}
 		//else
@@ -697,7 +699,7 @@ public class PowerSigns extends JavaPlugin
 	{
 		if (!hasItems(reqItems, inventory))
     			return false;
-		return !inventory.removeItem(reqItems).isEmpty();
+		return inventory.removeItem(reqItems).isEmpty();
 	}
 
 	public static boolean isEmpty(Block block)

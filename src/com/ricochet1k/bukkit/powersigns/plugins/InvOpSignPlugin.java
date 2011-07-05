@@ -15,6 +15,8 @@ import org.bukkit.block.Sign;
 import org.bukkit.craftbukkit.entity.CraftItem;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.StorageMinecart;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -30,10 +32,12 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 		PowerSigns.register("invpull", "[*(0-99)] [u|d] (s|(fblrud)+)", iosp);
 		PowerSigns.register("invdrop", "[*(0-99)] (s|(fblrud)+)", iosp);
 		PowerSigns.register("invsuck", "[*(0-99)] (s|(fblrud)+)", iosp);
+		PowerSigns.register("take", "[*(0-99)] (s|(fblrud)+)", iosp);
+		PowerSigns.register("give", "[*(0-99)] (s|(fblrud)+)", iosp);
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.repeatPart,PowerSigns.verticalPart,PowerSigns.vectorPart)+"$",
+			PowerSigns.join(PowerSigns.repeatPart,PowerSigns.verticalPart,PowerSigns.vectorPart),
 			Pattern.CASE_INSENSITIVE);
 	
 	@Override
@@ -69,20 +73,11 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 		
 		if (action.equalsIgnoreCase("invpush"))
 		{
-			Material putMaterial = null;
 			ItemStack[] items = inventory.getContents();
 			
-			for (Material material : materials)
-			{
-				int count = PowerSigns.inventoryCount(inventory, material);
-				if (count >= repeat)
-				{
-					putMaterial = material;
-					break;
-				}
-			}
+			int count = PowerSigns.inventoryCount(inventory, materials);
 			
-			if (putMaterial == null)
+			if (count < repeat)
 				return plugin.debugFail("not enough items");
 			
 			BlockLine line = new BlockLine(startBlock, forward);
@@ -103,7 +98,7 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 			for (int i = 0; i < items.length; i++)
 			{
 				ItemStack itemStack = items[i];
-				if (itemStack == null || !itemStack.getType().equals(putMaterial))
+				if (itemStack == null || !PowerSigns.materialsMatch(itemStack.getType(), materials))
 					continue;
 				
 				int iAmount = itemStack.getAmount();
@@ -125,7 +120,7 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 				}
 				
 				for (int j = 0; j < howMany; j++)
-					line.next().setTypeIdAndData(itemStack.getTypeId(), (byte)itemStack.getDurability(), true);
+					line.next().setTypeIdAndData(itemStack.getTypeId(), (itemStack.getData()==null)?0:itemStack.getData().getData(), true);
 			}
 			
 			
@@ -210,12 +205,14 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 					inventory.setItem(i, itemStack);
 				}
 			}
+			
+			return true;
 		}
 		else if (action.equalsIgnoreCase("invsuck"))
 		{
 			CraftItem[] foundItems = new CraftItem[repeat];
 			int index = 0;
-			for (Entity entity : PowerSigns.entitiesNearBlock(startBlock, 0.6))
+			for (Entity entity : PowerSigns.entitiesNearBlock(startBlock, 1))
 			{
 				if (entity instanceof CraftItem)
 				{
@@ -243,6 +240,79 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 				
 				foundItems[i].remove();
 			}
+			
+			return true;
+		}
+		else if (action.equalsIgnoreCase("take") || action.equalsIgnoreCase("give"))
+		{
+			boolean didSomething = false;
+			for (Entity entity : PowerSigns.entitiesNearBlock(startBlock, 1))
+			{
+				Inventory inv = null;
+				
+				if (entity instanceof StorageMinecart)
+					inv = ((StorageMinecart)entity).getInventory();
+				else if (entity instanceof Player)
+					inv = ((Player)entity).getInventory();
+				else
+					continue;
+				
+				Inventory fromInv, toInv;
+				
+				if (action.equalsIgnoreCase("take"))
+				{
+					fromInv = inv;
+					toInv = inventory;
+				}
+				else
+				{
+					fromInv = inventory;
+					toInv = inv;
+				}
+				
+				int count = PowerSigns.inventoryCount(fromInv, materials);
+				
+				if (count < repeat)
+					continue;
+				
+				didSomething = true;
+				
+				count = repeat;
+				
+				ItemStack[] items = fromInv.getContents();
+				for (int i = 0; i < items.length; i++)
+				{
+					ItemStack item = items[i];
+					if (item == null) continue;
+					
+					Material itemType = item.getType();
+					for (int j = 0; j < materials.length; j++)
+					{
+						if (itemType != materials[j])
+							continue;
+						
+						int amount = item.getAmount();
+						int newAmount = 0;
+						if (amount > count)
+							newAmount = amount - count;
+						
+						ItemStack newItem = item.clone();
+						newItem.setAmount(amount - newAmount);
+						toInv.addItem(newItem);
+						
+						item.setAmount(newAmount);
+						if (newAmount == 0)
+							item = null;
+						fromInv.setItem(i, item);
+						
+						count -= amount - newAmount;
+					}
+					
+					if (count == 0)
+						break;
+				}
+			}
+			return didSomething;
 		}
 		
 		return false;
