@@ -41,12 +41,28 @@ public class PowerSignsBlockListener extends BlockListener
 	@Override
 	public void onBlockRedstoneChange(BlockRedstoneEvent event)
 	{
-		if (plugin.isDisabled() || event.getNewCurrent() == 0 || event.getOldCurrent() != 0) return;
+		if (plugin.isDisabled()) return;
+		//PowerSigns.log.info("[PS] Redstone event:" + Integer.toString(event.getOldCurrent()) + " "
+		//			+ Integer.toString(event.getNewCurrent()) + " " + event.getBlock().getType().toString());
+		
+		if (event.getNewCurrent() == 0 || event.getOldCurrent() != 0) return;
 		
 		Block block = event.getBlock();
+		if (block.getType() == Material.STONE_BUTTON)
+		{
+			int data = (block.getData() & 0x7);
+			if (data == 1) data = 5;
+			BlockFace facing = PowerSigns.notchToFacing(data);
+			if (facing == null) PowerSigns.log.severe("Bad facing: " + Integer.toString(block.getData()));
+			else
+				block = block.getRelative(facing.getOppositeFace());
+			//PowerSigns.log.info("[PS] " + block.getType().toString() + " " + Integer.toString(data)
+			//		 + " " + facing.toString());
+		}
+		
 		for (BlockFace face : adjacentFaces)
 		{
-			Block temp = block.getFace(face);
+			Block temp = block.getRelative(face);
 			Material tempType = temp.getType();
 			if (tempType.equals(Material.WALL_SIGN) || tempType.equals(Material.SIGN_POST)) {
 				plugin.tryPowerSign(temp);

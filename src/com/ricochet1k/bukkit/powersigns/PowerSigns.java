@@ -459,9 +459,9 @@ public class PowerSigns extends JavaPlugin
 	public static Block getStartBlock(Block signBlock, BlockFace signDir, BlockFace forward)
 	{
 		if (signBlock.getType().equals(Material.WALL_SIGN))
-			return signBlock.getFace(signDir, 1); // start on the block it's attached to
+			return signBlock.getRelative(signDir, 1); // start on the block it's attached to
 		else if (signBlock.getType().equals(Material.SIGN_POST) && forward == BlockFace.DOWN)
-			return signBlock.getFace(forward, 1); // start on what the sign post stands on
+			return signBlock.getRelative(forward, 1); // start on what the sign post stands on
 		return signBlock;
 	}
 
@@ -562,7 +562,11 @@ public class PowerSigns extends JavaPlugin
 		
 		return vector;
 	}
-	
+	public static Block blockFromVector(Block block, String s, BlockFace forward)
+	{
+		Vector vec = strToVector(s, forward);
+		return block.getRelative(vec.getBlockX(), vec.getBlockY(), vec.getBlockZ());
+	}
 
 	// //////////////////////// Debugging Stuff ///////////////////////////
 	

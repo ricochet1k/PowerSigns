@@ -34,9 +34,9 @@ public class ActivateSignPlugin implements PowerSignsPlugin
 		//Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
 		Block startBlock;
 		if (forward != signDir && signBlock.getType().equals(Material.WALL_SIGN))
-			startBlock = signBlock.getFace(forward, 1);
+			startBlock = signBlock.getRelative(forward, 1);
 		else
-			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
 		
 		boolean didSomething = false;
 		for (Block block : new BlockLine(startBlock, forward).matches(PowerSigns.signMaterials))

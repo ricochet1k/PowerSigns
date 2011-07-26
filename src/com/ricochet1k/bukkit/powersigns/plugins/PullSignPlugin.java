@@ -35,7 +35,7 @@ public class PullSignPlugin implements PowerSignsPlugin
 
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(3));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
 		//BlockFace direction = PowerSigns.getDirection(m.group(4), signDir, m.group(3));
 
 		Material[] moveTypes = PowerSigns.getMaterials(signState.getLine(1));
@@ -74,7 +74,7 @@ public class PullSignPlugin implements PowerSignsPlugin
 		}
 
 
-		materialLine.moveTo(new BlockLine(materialLine.getNextBlock().getFace(forward, -1 * repeat), forward), numToPull);
+		materialLine.moveTo(new BlockLine(materialLine.getNextBlock().getRelative(forward, -1 * repeat), forward), numToPull);
 
 		return true;
 	}

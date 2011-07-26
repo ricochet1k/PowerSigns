@@ -53,7 +53,7 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(2));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
 		
 		Vector dir = PowerSigns.strToVector(m.group(3), signDir);
 		
@@ -235,9 +235,12 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 			
 			for (int i = 0; i < repeat; i++)
 			{
-				if (!inventory.addItem(foundItems[i].getItemStack()).isEmpty())
+				ItemStack itemStack = foundItems[i].getItemStack();
+				if (!inventory.addItem(itemStack).isEmpty())
 					return plugin.debugFail("inv full");
 				
+				itemStack.setAmount(0);
+				foundItems[i].setItemStack(itemStack);
 				foundItems[i].remove();
 			}
 			

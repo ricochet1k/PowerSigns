@@ -48,7 +48,7 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 	
 	public Block getPrevBlock()
 	{
-		return nextBlock.getFace(backward);
+		return nextBlock.getRelative(backward);
 	}
 	
 	public Block getNextBlock()
@@ -70,7 +70,7 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
     {
 	    if (failed) return null;
 	    
-	    setNextBlock(nextBlock.getFace(forward));
+	    setNextBlock(nextBlock.getRelative(forward));
 	    
 	    return getPrevBlock();
     }

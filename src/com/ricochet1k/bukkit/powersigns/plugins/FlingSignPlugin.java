@@ -35,9 +35,9 @@ public class FlingSignPlugin implements PowerSignsPlugin
 		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(1), signDir);
 		
 		//get the target area
-		Block targArea = signBlock.getFace(signDir);
+		Block targArea = signBlock.getRelative(signDir);
 		if(signBlock.getType() == Material.WALL_SIGN)
-			targArea = targArea.getFace(signDir);
+			targArea = targArea.getRelative(signDir);
 		
 		//check the target area is empty
 		String ballisticsLine = signState.getLine(1);

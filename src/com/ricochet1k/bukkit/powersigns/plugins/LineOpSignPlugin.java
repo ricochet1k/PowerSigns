@@ -16,7 +16,6 @@ public class LineOpSignPlugin implements PowerSignsPlugin
 	public static void register() {
 		LineOpSignPlugin lasp = new LineOpSignPlugin();
 		PowerSigns.register("line", "(s|(fblrud)+)(1234) (|~) (s|(fblrud)+)(1234)", lasp);
-		//PowerSigns.register("lineswap", "(s|(fblrud)+)(1234) (s|(fblrud)+)(1234)", lasp);
 	}
 	
 	static final Pattern argsPattern = Pattern.compile("\\s+(s|[fblrud]+)([1234])\\s*(|~)\\s*(s|[fblrud]+)([1234])",
@@ -26,17 +25,16 @@ public class LineOpSignPlugin implements PowerSignsPlugin
 	@Override
 	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
 	{
-		//Sign signState = (Sign) signBlock.getState();
+		Sign signState = (Sign) signBlock.getState();
+		if (args.isEmpty()) args = signState.getLine(1);
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		
 		
 		Matcher m = argsPattern.matcher(args);
-		if (!m.matches())
-		{return plugin.debugFail("parse linespec"); }
+		if (!m.matches()) return plugin.debugFail("syntax");
 
 		Sign[] signStates = new Sign[2];
-		//Location[] signLocs = new Location[] { null, null };
 		int[] signLines = new int[2];
 
 		for (int i = 0; i < 2; i++)
@@ -48,8 +46,8 @@ public class LineOpSignPlugin implements PowerSignsPlugin
 			
 			if (!PowerSigns.materialsMatch(found.getType(), PowerSigns.signMaterials))
 			{
-				PowerSigns.log.info("[LineAlterSignPlugin]" + "Bad block: " + found.getType().toString());
-				return false;
+				//PowerSigns.log.info("[LineAlterSignPlugin]" + "Bad block: " + found.getType().toString());
+				return plugin.debugFail("Not sign " + found.getType().toString());
 			}
 			
 			//signLocs[i] = found.getLocation();

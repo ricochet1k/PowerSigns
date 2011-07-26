@@ -29,7 +29,7 @@ public class DetectSignPlugin implements PowerSignsPlugin
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
 		
 		signState.setLine(1, startBlock.getType().toString().toLowerCase());
 		signState.setLine(2, Integer.toString(startBlock.getType().getId()));

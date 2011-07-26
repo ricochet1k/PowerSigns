@@ -37,7 +37,7 @@ public class CannonSignPlugin implements PowerSignsPlugin
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(2));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
 		
 		String type = argsm.group(1);
 		
@@ -69,7 +69,7 @@ public class CannonSignPlugin implements PowerSignsPlugin
 			return plugin.debugFail("not dispenser");
 		Block dispenserBlock = startBlock;
 		// check that the dispenser's facing isn't obstructed
-		final Block placeHere = dispenserBlock.getFace(PowerSigns.notchToFacing(dispenserBlock.getData()));
+		final Block placeHere = dispenserBlock.getRelative(PowerSigns.notchToFacing(dispenserBlock.getData()));
 		if (!PowerSigns.isEmpty(placeHere))
 			return plugin.debugFail("dispenser blocked");
 		

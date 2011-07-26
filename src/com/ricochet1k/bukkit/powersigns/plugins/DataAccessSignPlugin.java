@@ -31,7 +31,7 @@ public class DataAccessSignPlugin implements PowerSignsPlugin
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getFace(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
 		
 		if (action.equals("dataset"))
 		{
