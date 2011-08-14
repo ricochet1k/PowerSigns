@@ -1,6 +1,6 @@
 name: PowerSigns
 main: com.ricochet1k.bukkit.powersigns.PowerSigns
-version: 0.8
+version: 0.9
 authors: [ricochet1k, KoryuObihiro]
 description: |
     Give your signs Power!

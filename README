@@ -29,3 +29,5 @@ Quick summary of different PowerSigns:
  - dataget and dataset: alter the data of a block
 
  - math: perform mathematical operations
+ 
+ - money: take/give money using a player's iConomy account

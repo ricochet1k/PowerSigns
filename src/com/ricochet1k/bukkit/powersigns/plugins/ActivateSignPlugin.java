@@ -44,7 +44,7 @@ public class ActivateSignPlugin implements PowerSignsPlugin
 			if (!plugin.tryPowerSign(block))
 			{
 				plugin.debugFail("sign failed");
-				break;
+				//break;
 			}
 			
 			didSomething = true;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ====================================================================== 
-     Mar 24, 2011 5:21:43 PM                                                        
+     Mar 24, 2011 5:21:43 PM
 
-     PowerSigns    
+     PowerSigns
      Give your signs Power to move blocks and more!
-                   
-     matt                                                                
+     
+     ricochet1k
      ====================================================================== -->
 <project name="PowerSigns" default="jar">
 	<description>
@@ -28,7 +28,7 @@
 				<!-- Information about the program itself -->
 				<attribute name="Implementation-Vendor" value=""/>
 				<attribute name="Implementation-Title" value="PowerSigns"/>
-				<attribute name="Implementation-Version" value="0.5"/>
+				<attribute name="Implementation-Version" value="0.9"/>
 				<!-- details -->
 				<!--
 				<section name="common/MyClass.class">

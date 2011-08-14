@@ -1,5 +1,6 @@
 package com.ricochet1k.bukkit.powersigns;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,6 +46,7 @@ import com.ricochet1k.bukkit.powersigns.plugins.InvCountSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.LineOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.MathSignPlugin;
+import com.ricochet1k.bukkit.powersigns.plugins.MoneySignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.PluginInfo;
 import com.ricochet1k.bukkit.powersigns.plugins.PowerSignsPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.PullSignPlugin;
@@ -123,6 +125,9 @@ public class PowerSigns extends JavaPlugin
 		DataAccessSignPlugin.register();
 		MathSignPlugin.register();
 		ToggleSignPlugin.register();
+		MoneySignPlugin.register(this);
+		
+		reloadPowerSigns();
 	}
 
 	@Override
@@ -222,20 +227,22 @@ public class PowerSigns extends JavaPlugin
 							return true;
 						}
 						
+						boolean newDebugRC = !getDebugRightClick(player);
+						
 						if (args.length > 2)
 						{
-							if (args[2].equalsIgnoreCase("on")) setDebugRightClick(true);
-							else if (args[2].equalsIgnoreCase("off")) setDebugRightClick(false);
+							if (args[2].equalsIgnoreCase("on")) newDebugRC = true;
+							else if (args[2].equalsIgnoreCase("off")) newDebugRC = false;
 							else
 							{
 								player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug rightclick [on|off]");
 								return true;
 							}
 						}
-						else
-							setDebugRightClick(!debugRightClick);
 						
-						player.sendMessage(ChatColor.GREEN + "Debugging right click " + (debugRightClick? "enabled." : "disabled."));
+						setDebugRightClick(player, newDebugRC);
+						
+						player.sendMessage(ChatColor.GREEN + "Debugging right click " + (newDebugRC? "enabled." : "disabled."));
 						return true;
 					}
 				}
@@ -326,7 +333,24 @@ public class PowerSigns extends JavaPlugin
 		return false;
 	}
 	
-	private void reloadPowerSigns() {
+	private void reloadPowerSigns()
+	{
+		if (!new File(getDataFolder(),"config.yml").exists())
+		{
+			getConfiguration().setProperty("maxDistance", maxDistance);
+			getConfiguration().setProperty("powerPerTNT", powerPerTNT);
+			getConfiguration().setProperty("maxCannonPower", maxCannonPower);
+			getConfiguration().setProperty("maxFlingPower", maxFlingPower);
+				
+			getConfiguration().save();
+		}
+		
+		getConfiguration().load();
+		maxDistance = getConfiguration().getInt("maxDistance", 50);
+		powerPerTNT = getConfiguration().getInt("powerPerTNT", 50);
+		maxCannonPower = getConfiguration().getInt("maxCannonPower", 200);
+		maxFlingPower = getConfiguration().getInt("maxFlingPower", 900);
+		
 		
 	}
 
@@ -572,8 +596,8 @@ public class PowerSigns extends JavaPlugin
 	
 	// Debug settings
 	private boolean debugSnowballs = false;
-	private boolean debugRightClick = false;
-	
+	//private boolean debugRightClick = false;
+	private Map<Player, Boolean> debugRCMap = new HashMap<Player, Boolean>();
 	
 	
 	String failMsg = "";
@@ -634,21 +658,16 @@ public class PowerSigns extends JavaPlugin
 		return debugSnowballs;
 	}
 	
-	public void setDebugRightClick(boolean debug)
+	public void setDebugRightClick(Player player, boolean debug)
 	{
-		/// Once Bukkit has support for unregistering events this will work.
-		
-		//if (debugRightClick && !debug)
-		//	getServer().getPluginManager().registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
-		//else
-		//	getServer().getPluginManager().unregisterEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
-		
-		debugRightClick = debug;
+		if (debug) debugRCMap.put(player, true);
+		else debugRCMap.remove(player);
 	}
 	
-	public boolean getDebugRightClick()
+	public boolean getDebugRightClick(Player player)
 	{
-		return debugRightClick;
+		Boolean debug = debugRCMap.get(player);
+		return debug != null && debug == true;
 	}
 	
 	
