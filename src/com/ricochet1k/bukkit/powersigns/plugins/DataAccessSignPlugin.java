@@ -13,12 +13,12 @@ public class DataAccessSignPlugin implements PowerSignsPlugin
 {
 	public static void register() {
 		DataAccessSignPlugin dasp = new DataAccessSignPlugin();
-		PowerSigns.register("dataset", dasp);
-		PowerSigns.register("dataget", dasp);
+		PowerSigns.register("dataset", "[u|d][@(0-99)]", dasp);
+		PowerSigns.register("dataget", "[u|d][@(0-99)]", dasp);
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart),
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart),
 			Pattern.CASE_INSENSITIVE);
 	
 	@Override
@@ -31,7 +31,7 @@ public class DataAccessSignPlugin implements PowerSignsPlugin
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
 		if (action.equals("dataset"))
 		{

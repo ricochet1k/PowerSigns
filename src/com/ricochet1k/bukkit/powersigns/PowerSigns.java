@@ -245,6 +245,20 @@ public class PowerSigns extends JavaPlugin
 						player.sendMessage(ChatColor.GREEN + "Debugging right click " + (newDebugRC? "enabled." : "disabled."));
 						return true;
 					}
+					//right-click debugging
+					else if (args[1].equalsIgnoreCase("redstone") || args[1].equalsIgnoreCase("rs"))
+					{
+						if (!hasPermission(player, "powersigns.debug.redstone"))
+						{
+							player.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+							return true;
+						}
+						
+						debugRedstone = !debugRedstone;
+						
+						player.sendMessage(ChatColor.GREEN + "Debugging redstone " + (debugRedstone? "enabled." : "disabled."));
+						return true;
+					}
 				}
 				else if(args[0].equalsIgnoreCase("syntax"))
 				{
@@ -359,7 +373,8 @@ public class PowerSigns extends JavaPlugin
 	
 	/////////////// Patterns //////////////////
 	
-	public static final String repeatPart = "(?:\\s+\\*(\\d{1,3}))?";
+	public static final String repeatPart = "(?:\\s*\\*(\\d{1,3}))?";
+	public static final String skipPart = "(?:\\s*@([0-9]+))?";
 	public static final String verticalPart = "(?:\\s+([ud]))?";
 	public static final String moveDirPart = "(?:\\s+([^v<>]))?";
 	public static final String cannonTypePart = "(?:\\s+(tnt|sand|gravel))?";
@@ -480,13 +495,15 @@ public class PowerSigns extends JavaPlugin
 		return signDir;
 	}
 
-	public static Block getStartBlock(Block signBlock, BlockFace signDir, BlockFace forward)
+	public static Block getStartBlock(Block signBlock, BlockFace signDir, BlockFace forward, String skipStr)
 	{
+		int skip = skipStr != null && skipStr.length() > 0? Integer.parseInt(skipStr) : 0;
+		Block startBlock = signBlock;
 		if (signBlock.getType().equals(Material.WALL_SIGN))
-			return signBlock.getRelative(signDir, 1); // start on the block it's attached to
+			startBlock = signBlock.getRelative(signDir, 1); // start on the block it's attached to
 		else if (signBlock.getType().equals(Material.SIGN_POST) && forward == BlockFace.DOWN)
-			return signBlock.getRelative(forward, 1); // start on what the sign post stands on
-		return signBlock;
+			startBlock = signBlock.getRelative(forward, 1); // start on what the sign post stands on
+		return startBlock.getRelative(forward, skip + 1);
 	}
 
 	public static BlockFace getDirection(String directionStr, BlockFace signDir, String verticalStr)
@@ -598,6 +615,7 @@ public class PowerSigns extends JavaPlugin
 	private boolean debugSnowballs = false;
 	//private boolean debugRightClick = false;
 	private Map<Player, Boolean> debugRCMap = new HashMap<Player, Boolean>();
+	public boolean debugRedstone = false;
 	
 	
 	String failMsg = "";
@@ -672,7 +690,7 @@ public class PowerSigns extends JavaPlugin
 	
 	
     //////////////////////// Simple Helper Methods //////////////////////// 
-	// / These are helper methods I wish were added to their respective classes
+	// These are helper methods I wish were added to their respective classes
 	
 	public static String join(String... strings)
 	{
@@ -727,8 +745,15 @@ public class PowerSigns extends JavaPlugin
 
 	public static boolean isEmpty(Block block)
 	{
-		return (block.getType().equals(Material.AIR) || ((block.getType().equals(Material.STATIONARY_WATER) 
-				|| block.getType().equals(Material.STATIONARY_LAVA)) && block.getData() != 0));
+		switch (block.getType())
+		{
+		case AIR:
+			return true;
+		case STATIONARY_WATER: 
+		case STATIONARY_LAVA:
+			if (block.getData() != 0) return true;
+		}
+		return false;
 	}
 	
 	public static boolean isFlingable(Block block)
@@ -783,6 +808,7 @@ public class PowerSigns extends JavaPlugin
 	}
 	public static BlockFace getOppositeFace(BlockFace face)
 	{
+		if (face == null) return null;
 		switch (face)
 		{
 		case NORTH: return BlockFace.SOUTH;
@@ -796,6 +822,7 @@ public class PowerSigns extends JavaPlugin
 	}
 	public static BlockFace rotateFaceLeft(BlockFace face)
 	{
+		if (face == null) return null;
 		switch (face)
 		{
 		case NORTH: return BlockFace.WEST;
@@ -807,6 +834,7 @@ public class PowerSigns extends JavaPlugin
 	}
 	public static BlockFace rotateFaceRight(BlockFace face)
 	{
+		if (face == null) return null;
 		switch (face)
 		{
 		case NORTH:	return BlockFace.EAST;

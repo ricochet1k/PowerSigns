@@ -28,7 +28,7 @@
 				<!-- Information about the program itself -->
 				<attribute name="Implementation-Vendor" value=""/>
 				<attribute name="Implementation-Title" value="PowerSigns"/>
-				<attribute name="Implementation-Version" value="0.9"/>
+				<attribute name="Implementation-Version" value="1.0"/>
 				<!-- details -->
 				<!--
 				<section name="common/MyClass.class">

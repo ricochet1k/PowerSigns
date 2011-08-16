@@ -3,7 +3,6 @@ package com.ricochet1k.bukkit.powersigns.plugins;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
@@ -16,11 +15,11 @@ import com.ricochet1k.bukkit.powersigns.PowerSigns;
 public class FlingSignPlugin implements PowerSignsPlugin
 {
 	public static void register() {
-		PowerSigns.register("fling", "[fblr]  /  (0-999) (0-99)", new FlingSignPlugin());
+		PowerSigns.register("fling", "[u|d][@(0-99)] [fblr]  /  (0-999) (0-99)", new FlingSignPlugin());
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join("\\s+([fblr])"), Pattern.CASE_INSENSITIVE);
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, "\\s+([fblr])"), Pattern.CASE_INSENSITIVE);
 	
 	@Override
 	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
@@ -31,13 +30,16 @@ public class FlingSignPlugin implements PowerSignsPlugin
 		Sign signState = (Sign) signBlock.getState();
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
+		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(1));
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2));
 		
-		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(1), signDir);
+		
+		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(3), signDir);
 		
 		//get the target area
-		Block targArea = signBlock.getRelative(signDir);
-		if(signBlock.getType() == Material.WALL_SIGN)
-			targArea = targArea.getRelative(signDir);
+		Block targArea = startBlock; //signBlock.getRelative(signDir);
+		//if(signBlock.getType() == Material.WALL_SIGN)
+		//	targArea = targArea.getRelative(signDir);
 		
 		//check the target area is empty
 		String ballisticsLine = signState.getLine(1);

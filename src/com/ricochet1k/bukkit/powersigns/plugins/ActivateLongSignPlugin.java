@@ -16,7 +16,7 @@ public class ActivateLongSignPlugin implements PowerSignsPlugin
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart), Pattern.CASE_INSENSITIVE);
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart), Pattern.CASE_INSENSITIVE);
 	
 	@Override
 	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
@@ -28,7 +28,7 @@ public class ActivateLongSignPlugin implements PowerSignsPlugin
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
 		BlockLine line = new BlockLine(startBlock, forward);
 		line.skipEmpty();

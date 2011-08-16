@@ -37,7 +37,7 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.repeatPart,PowerSigns.verticalPart,PowerSigns.vectorPart),
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, PowerSigns.repeatPart, PowerSigns.vectorPart),
 			Pattern.CASE_INSENSITIVE);
 	
 	@Override
@@ -48,14 +48,14 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 		
 		Sign signState = (Sign) signBlock.getState();
 		
-		int repeat = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : 1;
+		int repeat = (m.group(3) != null) ? Integer.parseInt(m.group(3)) : 1;
 		if (repeat <= 0) return plugin.debugFail("bad repeat");
 
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, m.group(2));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
-		Vector dir = PowerSigns.strToVector(m.group(3), signDir);
+		Vector dir = PowerSigns.strToVector(m.group(4), signDir);
 		
 		Block invBlock = signBlock.getRelative(dir.getBlockX(), dir.getBlockY(), dir.getBlockZ());
 		

@@ -19,11 +19,11 @@ import com.ricochet1k.bukkit.powersigns.PowerSigns;
 public class CannonSignPlugin implements PowerSignsPlugin
 {
 	public static void register() {
-		PowerSigns.register("cannon", "(sand|gravel|tnt) [u|d]  /  (0-999) (0-99) [ns]", new CannonSignPlugin());
+		PowerSigns.register("cannon", "[u|d][@(0-99)] (sand|gravel|tnt)  /  (0-999) (0-99) [ns]", new CannonSignPlugin());
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.cannonTypePart,PowerSigns.verticalPart), Pattern.CASE_INSENSITIVE);
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, PowerSigns.cannonTypePart), Pattern.CASE_INSENSITIVE);
 	
 	static final Pattern cannonBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})(?:\\s+(ns))?");
 	
@@ -36,8 +36,8 @@ public class CannonSignPlugin implements PowerSignsPlugin
 		Sign signState = (Sign) signBlock.getState();
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(2));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(1));
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2));
 		
 		String type = argsm.group(1);
 		
@@ -49,7 +49,7 @@ public class CannonSignPlugin implements PowerSignsPlugin
 		Matcher m = cannonBallisticsPattern.matcher(signState.getLine(1));
 		if (!m.matches())
 			return plugin.debugFail("parse ballistics");
-		int power = Integer.parseInt(m.group(1));
+		int power = Integer.parseInt(m.group(3));
 		
 		if (power > PowerSigns.maxCannonPower)
 		{

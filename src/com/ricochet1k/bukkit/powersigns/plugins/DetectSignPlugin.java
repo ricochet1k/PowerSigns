@@ -12,11 +12,11 @@ import com.ricochet1k.bukkit.powersigns.PowerSigns;
 public class DetectSignPlugin implements PowerSignsPlugin
 {
 	public static void register() {
-		PowerSigns.register("detect", new DetectSignPlugin());
+		PowerSigns.register("detect", "[u|d][@(0-99)]", new DetectSignPlugin());
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart),
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart),
 			Pattern.CASE_INSENSITIVE);
 	
 	@Override
@@ -29,7 +29,7 @@ public class DetectSignPlugin implements PowerSignsPlugin
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
 		signState.setLine(1, startBlock.getType().toString().toLowerCase());
 		signState.setLine(2, Integer.toString(startBlock.getType().getId()));

@@ -18,7 +18,7 @@ public class PullSignPlugin implements PowerSignsPlugin
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join("(?:\\s+(\\d{1,2}))?(?:\\s*\\*(\\d{1,3}))?", PowerSigns.verticalPart/*, PowerSigns.moveDirPart*/),
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, "(?:\\s+(\\d{1,2}))?(?:\\s*\\*(\\d{1,3}))?" /*, PowerSigns.moveDirPart*/),
 			Pattern.CASE_INSENSITIVE);
 	
 	@Override
@@ -29,14 +29,13 @@ public class PullSignPlugin implements PowerSignsPlugin
 		
 		Sign signState = (Sign) signBlock.getState();
 		
-		int count = (m.group(1) != null) ? Integer.parseInt(m.group(1)) : -1;
-		int repeat = (m.group(2) != null) ? Integer.parseInt(m.group(2)) : 1;
+		int count = (m.group(3) != null) ? Integer.parseInt(m.group(3)) : -1;
+		int repeat = (m.group(4) != null) ? Integer.parseInt(m.group(4)) : 1;
 		if (repeat <= 0) return plugin.debugFail("bad repeat");
 
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, m.group(3));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
-		//BlockFace direction = PowerSigns.getDirection(m.group(4), signDir, m.group(3));
+		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 
 		Material[] moveTypes = PowerSigns.getMaterials(signState.getLine(1));
 		
@@ -59,17 +58,17 @@ public class PullSignPlugin implements PowerSignsPlugin
 		numEmpty = materialLine.skipEmpty();
 
 		if (numEmpty < repeat)
-			return plugin.debugFail("not enough space");
+			return plugin.debugFail("not enough space " + numEmpty);
 
 		//Block blockToPull = line.nextBlock;
 
 		numToPull = materialLine.matches(moveTypes).count((count == -1)? PowerSigns.maxDistance : count);
 		if (numToPull == 0)
-		{ return plugin.debugFail("nothing to pull"); }
+			return plugin.debugFail("nothing to pull " + numToPull);
 		if (count != -1)
 		{
 			if (numToPull != -1)
-			{ return plugin.debugFail("cant pull exact"); }
+				return plugin.debugFail("cant pull exact " + numToPull);
 			numToPull = count;
 		}
 

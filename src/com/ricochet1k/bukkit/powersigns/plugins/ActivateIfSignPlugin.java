@@ -14,14 +14,14 @@ import com.ricochet1k.bukkit.powersigns.PowerSigns;
 public class ActivateIfSignPlugin implements PowerSignsPlugin
 {
 	public static void register() {
-		PowerSigns.register("activateif", "[u|d]  /  activate[fail] (vector) | (vector)(line) (=|!=|<|<=|>|>=) (vector)(line)", new ActivateIfSignPlugin());
+		PowerSigns.register("activateif", "[u|d][@(0-99)]  /  activate[fail] (vector) | (vector)(line) (=|!=|<|<=|>|>=) (vector)(line)", new ActivateIfSignPlugin());
 	}
 	
 	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart), Pattern.CASE_INSENSITIVE);
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart), Pattern.CASE_INSENSITIVE);
 	
 	static final Pattern activatePattern = Pattern.compile(
-			"activate(fail)?\\s+" + PowerSigns.vectorPart, Pattern.CASE_INSENSITIVE);
+			"activate(fail)?" + PowerSigns.vectorPart, Pattern.CASE_INSENSITIVE);
 	static final Pattern lineComparePattern = Pattern.compile(
 			"(s|[fblrud]+)([1-4])\\s*(!?=|<=?|>=?)\\s*(s|[fblrud]+)([1-4])", Pattern.CASE_INSENSITIVE);
 	
@@ -41,9 +41,13 @@ public class ActivateIfSignPlugin implements PowerSignsPlugin
 		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(1));
 		Block startBlock;
 		if (forward != signDir && signBlock.getType().equals(Material.WALL_SIGN))
-			startBlock = signBlock.getRelative(forward, 1);
+		{
+			String skipStr = argsm.group(2);
+			int skip = skipStr != null && skipStr.length() > 0? Integer.parseInt(skipStr) : 0;
+			startBlock = signBlock.getRelative(forward, skip + 1);
+		}
 		else
-			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2));
 		
 		
 		if (activatem.matches())

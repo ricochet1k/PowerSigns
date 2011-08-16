@@ -58,7 +58,9 @@ public class MoneySignPlugin implements PowerSignsPlugin
         plugin.getServer().getPluginManager().registerEvent(Type.PLUGIN_DISABLE, server, Priority.Monitor, plugin);
 	}
 
-	static final Pattern argsPattern = Pattern.compile("\\s+(take|give)", Pattern.CASE_INSENSITIVE);
+	static final Pattern argsPattern = Pattern.compile(
+			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, "\\s+(take|give)"),
+			Pattern.CASE_INSENSITIVE);
 	
 	@Override
 	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
@@ -71,8 +73,8 @@ public class MoneySignPlugin implements PowerSignsPlugin
 		Sign signState = (Sign) signBlock.getState();
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir);
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward).getRelative(forward, 1);
+		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
+		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
 		double amount;
 		try
@@ -96,17 +98,26 @@ public class MoneySignPlugin implements PowerSignsPlugin
 			return plugin.debugFail("No player");
 		
 		Holdings holdings = iConomy.getAccount(player.getName()).getHoldings();
+		String otherAccount = signState.getLine(2);
+		Holdings other = otherAccount.length() > 0? iConomy.getAccount(otherAccount).getHoldings() : null;
+		if (other == null && otherAccount.length() > 0)
+			return plugin.debugFail("no account: "+otherAccount);
 		
-		if (m.group(1).equalsIgnoreCase("give"))
+		String maction = m.group(3).toLowerCase();
+		
+		if (maction.equals("give"))
 		{
+			if (other != null && !other.hasEnough(amount))
+				return plugin.debugFail("Not enough money");
+			if (other != null) other.subtract(amount);
 			holdings.add(amount);
 		}
-		else
+		else //if (action.equals("take"))
 		{
-			if (holdings.hasEnough(amount))
-				holdings.subtract(amount);
-			else
+			if (!holdings.hasEnough(amount))
 				return plugin.debugFail("Not enough money");
+			holdings.subtract(amount);
+			if (other != null) other.add(amount);
 		}
 		
 		return true;
