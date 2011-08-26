@@ -25,8 +25,6 @@ public class PowerSignsPlayerListener extends PlayerListener {
 			if (!result)
 			{
 				event.getPlayer().sendMessage(ChatColor.RED+ "Sign failed with message: "+ plugin.failMsg);
-				//event.setCancelled(false);
-				//return;
 			}
 			event.setCancelled(true);
 		}

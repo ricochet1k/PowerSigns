@@ -1,7 +1,6 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -19,63 +18,69 @@ import com.iConomy.iConomy;
 import com.iConomy.system.Holdings;
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class MoneySignPlugin implements PowerSignsPlugin
+public class MoneySignPlugin extends AimedSign
 {
+	public MoneySignPlugin()
+	{
+		super("\\s+(take|give)");
+	}
+
 	public iConomy iconomy = null;
 
-	public static void register(final PowerSigns plugin) {
+	public static void register(final PowerSigns plugin)
+	{
 		final MoneySignPlugin msp = new MoneySignPlugin();
 		PowerSigns.register("money", "take|give  /  amount", msp);
-		
-		ServerListener server = new ServerListener() {
-			@Override public void onPluginEnable(PluginEnableEvent event)
-			{
-				if (msp.iconomy == null) {
-		            Plugin iConomy = plugin.getServer().getPluginManager().getPlugin("iConomy");
 
-		            if (iConomy != null) {
-		                if (iConomy.isEnabled() && iConomy.getClass().getName().equals("com.iConomy.iConomy")) {
-		                    msp.iconomy = (iConomy)iConomy;
-		                    System.out.println("[PowerSigns-money] Found iConomy.");
-		                }
-		            }
-		        }
-			}
-			
-			@Override public void onPluginDisable(PluginDisableEvent event)
+		ServerListener serverListener = new ServerListener()
+		{
+			@Override
+			public void onPluginEnable(PluginEnableEvent event)
 			{
-				if (msp.iconomy != null) {
-		            if (event.getPlugin().getDescription().getName().equals("iConomy")) {
-		                msp.iconomy = null;
-		                System.out.println("[PowerSigns-money] Lost iConomy.");
-		            }
-		        }
+				if (msp.iconomy == null)
+				{
+					Plugin iConomy = plugin.getServer().getPluginManager().getPlugin("iConomy");
+
+					if (iConomy != null)
+					{
+						if (iConomy.isEnabled() && iConomy.getClass().getName().equals("com.iConomy.iConomy"))
+						{
+							msp.iconomy = (iConomy) iConomy;
+							System.out.println("[PowerSigns-money] Found iConomy.");
+						}
+					}
+				}
+			}
+
+			@Override
+			public void onPluginDisable(PluginDisableEvent event)
+			{
+				if (msp.iconomy != null)
+				{
+					if (event.getPlugin().getDescription().getName().equals("iConomy"))
+					{
+						msp.iconomy = null;
+						System.out.println("[PowerSigns-money] Lost iConomy.");
+					}
+				}
 
 			}
 		};
-		
-		plugin.getServer().getPluginManager().registerEvent(Type.PLUGIN_ENABLE, server, Priority.Monitor, plugin);
-        plugin.getServer().getPluginManager().registerEvent(Type.PLUGIN_DISABLE, server, Priority.Monitor, plugin);
+
+		plugin.getServer().getPluginManager()
+				.registerEvent(Type.PLUGIN_ENABLE, serverListener, Priority.Monitor, plugin);
+		plugin.getServer().getPluginManager()
+				.registerEvent(Type.PLUGIN_DISABLE, serverListener, Priority.Monitor, plugin);
 	}
 
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, "\\s+(take|give)"),
-			Pattern.CASE_INSENSITIVE);
-	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, BlockFace signDir,
+			BlockFace forward, Block startBlock)
 	{
 		if (iconomy == null) return plugin.debugFail("No iConomy");
-		
-		Matcher m = argsPattern.matcher(args);
-		if (!m.matches()) return plugin.debugFail("syntax");
-		
+
 		Sign signState = (Sign) signBlock.getState();
-		
-		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
-		
+
 		double amount;
 		try
 		{
@@ -85,41 +90,36 @@ public class MoneySignPlugin implements PowerSignsPlugin
 		{
 			return plugin.debugFail("Bad amount");
 		}
-		
+
 		Player player = null;
-		
+
 		for (Entity entity : PowerSigns.entitiesNearBlock(startBlock, 1))
 		{
-			if (entity instanceof Player)
-				player = ((Player)entity);
+			if (entity instanceof Player) player = ((Player) entity);
 		}
-		
-		if (player == null)
-			return plugin.debugFail("No player");
-		
+
+		if (player == null) return plugin.debugFail("No player");
+
 		Holdings holdings = iConomy.getAccount(player.getName()).getHoldings();
 		String otherAccount = signState.getLine(2);
-		Holdings other = otherAccount.length() > 0? iConomy.getAccount(otherAccount).getHoldings() : null;
-		if (other == null && otherAccount.length() > 0)
-			return plugin.debugFail("no account: "+otherAccount);
-		
-		String maction = m.group(3).toLowerCase();
-		
+		Holdings other = otherAccount.length() > 0 ? iConomy.getAccount(otherAccount).getHoldings() : null;
+		if (other == null && otherAccount.length() > 0) return plugin.debugFail("no account: " + otherAccount);
+
+		String maction = argsm.group(1).toLowerCase();
+
 		if (maction.equals("give"))
 		{
-			if (other != null && !other.hasEnough(amount))
-				return plugin.debugFail("Not enough money");
+			if (other != null && !other.hasEnough(amount)) return plugin.debugFail("Not enough money");
 			if (other != null) other.subtract(amount);
 			holdings.add(amount);
 		}
-		else //if (action.equals("take"))
+		else // if (action.equals("take"))
 		{
-			if (!holdings.hasEnough(amount))
-				return plugin.debugFail("Not enough money");
+			if (!holdings.hasEnough(amount)) return plugin.debugFail("Not enough money");
 			holdings.subtract(amount);
 			if (other != null) other.add(amount);
 		}
-		
+
 		return true;
 	}
 

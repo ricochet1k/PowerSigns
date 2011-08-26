@@ -2,7 +2,6 @@ package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.Random;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -24,47 +23,42 @@ import org.bukkit.util.Vector;
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 import com.ricochet1k.bukkit.powersigns.utils.BlockLine;
 
-public class InvOpSignPlugin implements PowerSignsPlugin
+public class InvOpSignPlugin extends AimedSign
 {
-	public static void register() {
-		InvOpSignPlugin iosp = new InvOpSignPlugin();
-		PowerSigns.register("invpush", "[*(0-99)] [u|d] (s|(fblrud)+)", iosp);
-		PowerSigns.register("invpull", "[*(0-99)] [u|d] (s|(fblrud)+)", iosp);
-		PowerSigns.register("invdrop", "[*(0-99)] (s|(fblrud)+)", iosp);
-		PowerSigns.register("invsuck", "[*(0-99)] (s|(fblrud)+)", iosp);
-		PowerSigns.register("take", "[*(0-99)] (s|(fblrud)+)", iosp);
-		PowerSigns.register("give", "[*(0-99)] (s|(fblrud)+)", iosp);
+	public InvOpSignPlugin()
+	{
+		super("(?:\\s*\\*(\\d{1,3}))?" + PowerSigns.vectorPart);
 	}
 	
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, PowerSigns.repeatPart, PowerSigns.vectorPart),
-			Pattern.CASE_INSENSITIVE);
+	public static void register() {
+		InvOpSignPlugin iosp = new InvOpSignPlugin();
+		PowerSigns.register("invpush", AimedSign.syntax + " (s|(fblrud)+)", iosp);
+		PowerSigns.register("invpull", AimedSign.syntax + " (s|(fblrud)+)", iosp);
+		PowerSigns.register("invdrop", AimedSign.syntax + " (s|(fblrud)+)", iosp);
+		PowerSigns.register("invsuck", AimedSign.syntax + " (s|(fblrud)+)", iosp);
+		PowerSigns.register("take", AimedSign.syntax + " (s|(fblrud)+)", iosp);
+		PowerSigns.register("give", AimedSign.syntax + " (s|(fblrud)+)", iosp);
+	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
-		Matcher m = argsPattern.matcher(args);
-		if (!m.matches()) return plugin.debugFail("syntax");
-		
 		Sign signState = (Sign) signBlock.getState();
 		
-		int repeat = (m.group(3) != null) ? Integer.parseInt(m.group(3)) : 1;
+		int repeat = (argsm.group(1) != null) ? Integer.parseInt(argsm.group(1)) : 1;
 		if (repeat <= 0) return plugin.debugFail("bad repeat");
-
-		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
-		Vector dir = PowerSigns.strToVector(m.group(4), signDir);
+		Vector dir = PowerSigns.strToVector(argsm.group(2), signDir);
 		
 		Block invBlock = signBlock.getRelative(dir.getBlockX(), dir.getBlockY(), dir.getBlockZ());
 		
 		Inventory inventory;
 		BlockState state = invBlock.getState();
 		if (state instanceof ContainerBlock)
-			inventory = ((ContainerBlock)state).getInventory();
+			inventory = ((ContainerBlock) state).getInventory();
 		else
-			return plugin.debugFail("bad inv:"+invBlock.getType().toString()+" "+dir.toString());
+			return plugin.debugFail("bad inv:" + invBlock.getType().toString() + " " + dir.toString());
 		
 		
 		Material[] materials = PowerSigns.getMaterials(signState.getLine(1));
@@ -86,7 +80,7 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 			{
 				if (PowerSigns.isEmpty(line.next()))
 					continue;
-				if (!PushSignPlugin.pushLine(plugin, line.getPrevBlock(), forward, materials, -1, x))
+				if (!MoveBlocksSignPlugin.pushLine(plugin, line.getPrevBlock(), forward, materials, -1, x))
 					return plugin.debugFail("couldn't push");
 				break;
 			}
@@ -145,7 +139,7 @@ public class InvOpSignPlugin implements PowerSignsPlugin
 				block.setTypeIdAndData(0, (byte)0, true);
 			}
 			
-			PullSignPlugin.pullLine(plugin, startBlock, forward, materials, -1, repeat);
+			MoveBlocksSignPlugin.pullLine(plugin, startBlock, forward, materials, -1, repeat);
 			return true;
 		}
 		else if (action.equalsIgnoreCase("invdrop"))

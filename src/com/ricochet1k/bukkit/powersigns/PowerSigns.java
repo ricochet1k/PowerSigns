@@ -2,9 +2,13 @@ package com.ricochet1k.bukkit.powersigns;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -18,7 +22,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -42,15 +45,14 @@ import com.ricochet1k.bukkit.powersigns.plugins.CannonSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.DataAccessSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.DetectSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.FlingSignPlugin;
+import com.ricochet1k.bukkit.powersigns.plugins.IPowerSignsPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvCountSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.LineOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.MathSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.MoneySignPlugin;
+import com.ricochet1k.bukkit.powersigns.plugins.MoveBlocksSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.PluginInfo;
-import com.ricochet1k.bukkit.powersigns.plugins.PowerSignsPlugin;
-import com.ricochet1k.bukkit.powersigns.plugins.PullSignPlugin;
-import com.ricochet1k.bukkit.powersigns.plugins.PushSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.ToggleSignPlugin;
 import com.ricochet1k.bukkit.powersigns.utils.FilteredIterator;
 import com.ricochet1k.bukkit.powersigns.utils.Predicate;
@@ -71,7 +73,6 @@ public class PowerSigns extends JavaPlugin
 	// Fling settings
 	public static int maxFlingPower = 900;
 	
-	
 	//////////// End Settings ////////////
 	
 	
@@ -81,6 +82,9 @@ public class PowerSigns extends JavaPlugin
 	public final PowerSignsPlayerListener playerListener = new PowerSignsPlayerListener(this);
 	public static final Random random = new Random();
 	private boolean disabled = false;
+	public static final HashSet<Byte> transparentMaterials = new HashSet<Byte>(Arrays.asList(new Byte[]{0,
+			(byte) Material.REDSTONE_WIRE.getId(), (byte) Material.REDSTONE_TORCH_OFF.getId(), (byte) Material.REDSTONE_TORCH_ON.getId(), 
+			(byte) Material.STONE_PLATE.getId(), (byte) Material.WOOD_PLATE.getId()}));
 	
 	public boolean isDisabled()
 	{
@@ -111,8 +115,8 @@ public class PowerSigns extends JavaPlugin
 		getServer().getPluginManager().registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
 		
 		
-		PushSignPlugin.register();
-		PullSignPlugin.register();
+		//PushSignPlugin.register();
+		MoveBlocksSignPlugin.register();
 		DetectSignPlugin.register();
 		LineOpSignPlugin.register();
 		ActivateSignPlugin.register();
@@ -171,11 +175,11 @@ public class PowerSigns extends JavaPlugin
 			if (args.length == 0)
 			{
 				//sendUsage(player);
-				player.sendMessage(ChatColor.RED + "PowerSigns commands: (alias /ps)");
+				player.sendMessage(ChatColor.RED + "[PowerSigns] commands: (alias /ps)");
 				if(PowerSigns.hasPermission(player, "powersigns.debug"))
-					player.sendMessage(ChatColor.RED + "/powersigns debug (snow[balls] | rightclick | rc)");
+					player.sendMessage(ChatColor.RED + "   debug (snow[balls] | rightclick | rc)");
 				if(PowerSigns.hasPermission(player, "powersigns.syntax"))
-					player.sendMessage(ChatColor.RED + "/powersigns syntax [signtype]");
+					player.sendMessage(ChatColor.RED + "   syntax [signtype]");
 				return true;
 			}
 			
@@ -187,7 +191,7 @@ public class PowerSigns extends JavaPlugin
 					//improper arguments, display syntax
 					if (args.length == 1)
 					{
-						player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug (snow[balls] | rightclick | rc ...");
+						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "usage: /powersigns debug (snow[balls] | rightclick | rc ...");
 						return true;
 					}
 					
@@ -196,7 +200,7 @@ public class PowerSigns extends JavaPlugin
 					{
 						if (!hasPermission(player, "powersigns.debug.snowballs"))
 						{
-							player.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
 						}
 						
@@ -208,14 +212,14 @@ public class PowerSigns extends JavaPlugin
 								setDebugSnowballs(false);
 							else
 							{
-								player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug snow[balls] [on|off]");
+								player.sendMessage("[PowerSigns] "+ ChatColor.RED + "PowerSigns usage: /powersigns debug snow[balls] [on|off]");
 								return true;
 							}
 						}
 						else
 							setDebugSnowballs(!debugSnowballs);
 						
-						player.sendMessage(ChatColor.GREEN + "Debugging snowballs " + (debugSnowballs? "enabled." : "disabled."));
+						player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Debugging snowballs " + (debugSnowballs? "enabled." : "disabled."));
 						return true;
 					}
 					//right-click debugging
@@ -223,7 +227,7 @@ public class PowerSigns extends JavaPlugin
 					{
 						if (!hasPermission(player, "powersigns.debug.rightclick"))
 						{
-							player.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
 						}
 						
@@ -235,22 +239,22 @@ public class PowerSigns extends JavaPlugin
 							else if (args[2].equalsIgnoreCase("off")) newDebugRC = false;
 							else
 							{
-								player.sendMessage(ChatColor.RED + "PowerSigns usage: /powersigns debug rightclick [on|off]");
+								player.sendMessage("[PowerSigns] "+ ChatColor.RED + "PowerSigns usage: /powersigns debug rightclick [on|off]");
 								return true;
 							}
 						}
 						
 						setDebugRightClick(player, newDebugRC);
 						
-						player.sendMessage(ChatColor.GREEN + "Debugging right click " + (newDebugRC? "enabled." : "disabled."));
+						player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Debugging right click " + (newDebugRC? "enabled." : "disabled."));
 						return true;
 					}
-					//right-click debugging
+					//redstone debugging
 					else if (args[1].equalsIgnoreCase("redstone") || args[1].equalsIgnoreCase("rs"))
 					{
 						if (!hasPermission(player, "powersigns.debug.redstone"))
 						{
-							player.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
 						}
 						
@@ -259,33 +263,81 @@ public class PowerSigns extends JavaPlugin
 						player.sendMessage(ChatColor.GREEN + "Debugging redstone " + (debugRedstone? "enabled." : "disabled."));
 						return true;
 					}
+					else if (args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("del"))
+					{
+						if (!hasPermission(player, "powersigns.debug.sign"))
+						{
+							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
+							return true;
+						}
+						
+						
+						
+						if (args[1].equalsIgnoreCase("add"))
+						{
+							List<Block> blocks = player.getLastTwoTargetBlocks(transparentMaterials, 50);
+							Block block = blocks.get(1);
+							if (block.getType() != Material.WALL_SIGN && block.getType() != Material.SIGN_POST)
+							{
+								player.sendMessage("[PowerSigns] "+ ChatColor.RED + "Please look at a sign first. " + block.getType());
+								return true;
+							}
+							
+							String name = "";
+							if (args.length >= 3)
+								name = args[2];
+							
+							setSignDebug(player, block.getLocation(), name);
+							
+							player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Debugging added for sign, named " + name);
+							return true;
+						}
+						else
+						{
+							if (args.length >= 3)
+							{
+								String name = args[2];
+								delSignDebug(player, name);
+								
+								player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Debugging removed for sign named " + name);
+								return true;
+							}
+							
+							List<Block> blocks = player.getLastTwoTargetBlocks(transparentMaterials, 50);
+							Block block = blocks.get(1);
+							if (block.getType() != Material.WALL_SIGN && block.getType() != Material.SIGN_POST)
+							{
+								player.sendMessage("[PowerSigns] "+ ChatColor.RED + "Please look at a sign first.");
+								return true;
+							}
+							
+							String name = delSignDebug(player, block.getLocation());
+							
+							player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Debugging removed for sign named " + name);
+							return true;
+						}
+					}
+					else if (args[1].equalsIgnoreCase("clear"))
+					{
+						clearSignDebug(player);
+						
+						player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Cleared debugging for all signs");
+						return true;
+					}
+					
 				}
 				else if(args[0].equalsIgnoreCase("syntax"))
 				{
 					if(!PowerSigns.Permissions.has(player, "powersigns.syntax"))
 					{
-						player.sendMessage(ChatColor.RED + "You do not have access to this command.");
+						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You do not have access to this command.");
 						return true;
 					}
 					
 					if(args.length == 1)
 					{
-						//boolean hasAnything = false;
-						//if !permissions player.sendMessage(ChatColor.RED + "You do not have access to this command.");
-						player.sendMessage(ChatColor.GREEN + "Syntax browsing: /powersigns syntax [sign]");
-						/*player.sendMessage(ChatColor.GOLD + "Signs available to you:");
-						//show a list of the signs they have access to
-						for(int i = 0; i < syntaxMessages[0].length; i++)
-							//permissions check against corresponding string
-							if(PowerSigns.hasPermission(player, syntaxMessages[1][i]))
-							{
-								player.sendMessage(syntaxMessages[0][i]);
-								hasAnything = true;
-							}
-						player.sendMessage(hasAnything? 
-								(ChatColor.GOLD + "End list.")
-								:(ChatColor.RED + "You don't have access to any PowerSigns!"));*/
-						StringBuilder builder = new StringBuilder(ChatColor.GOLD + "Available signs: ");
+						player.sendMessage("[PowerSigns] "+ ChatColor.GREEN + "Syntax browsing: /powersigns syntax [sign]");
+						StringBuilder builder = new StringBuilder("[PowerSigns] "+ ChatColor.GOLD + "Available signs: ");
 						boolean first = true;
 						for (PluginInfo psplugin : plugins)
 						{
@@ -312,11 +364,11 @@ public class PowerSigns extends JavaPlugin
 								//if (psplugin.syntax.length() == 0)
 								//	player.sendMessage(ChatColor.RED + "No syntax is available for !" + psplugin.action);
 								//else
-								player.sendMessage(ChatColor.GOLD + "!" + psplugin.action + " " + psplugin.syntax);
+								player.sendMessage("[PowerSigns] "+ ChatColor.GOLD + "!" + psplugin.action + " " + psplugin.syntax);
 								return true;
 							}
 						}
-						player.sendMessage(ChatColor.RED + "Unknown sign: "+sign);
+						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "Unknown sign: "+sign);
 						return true;
 					}
 				}
@@ -324,23 +376,14 @@ public class PowerSigns extends JavaPlugin
 				{
 					if(!PowerSigns.hasPermission(player, "powersigns.reload"))
 					{
-						player.sendMessage(ChatColor.RED + "You do not have access to this command.");
+						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You do not have access to this command.");
 						return true;
 					}
 					reloadPowerSigns();
 				}
-				/*else if((args[0].equalsIgnoreCase("wires"))) //display "wiring status"
-				{
-					if(!PowerSigns.hasPermission(player, "powersigns.wires"))
-					{
-						player.sendMessage(ChatColor.RED + "You do not have access to this command.");
-						return true;
-					}
-					//DISPLAY STATUSES FOR GLOBAL WIRE-ON/OFF SETTINGS
-				}*/
 				//handle incorrect commands
 				else
-					player.sendMessage(ChatColor.RED + "["+getDescription().getName()+"] Command not found");
+					player.sendMessage(ChatColor.RED + "[PowerSigns] Command not found");
 			}
 		}
 		
@@ -373,26 +416,26 @@ public class PowerSigns extends JavaPlugin
 	
 	/////////////// Patterns //////////////////
 	
-	public static final String repeatPart = "(?:\\s*\\*(\\d{1,3}))?";
-	public static final String skipPart = "(?:\\s*@([0-9]+))?";
-	public static final String verticalPart = "(?:\\s+([ud]))?";
-	public static final String moveDirPart = "(?:\\s+([^v<>]))?";
-	public static final String cannonTypePart = "(?:\\s+(tnt|sand|gravel))?";
-	public static final String directionPart = "(?:\\s+([fblruds]))";
+	//public static final String repeatPart = "(?:\\s*\\*(\\d{1,3}))?";
+	//public static final String skipPart = "(?:\\s*@([0-9]+))?";
+	//public static final String verticalPart = "(?:\\s+([ud]))?";
+	//public static final String moveDirPart = "(?:\\s+([^v<>]))?";
+	//public static final String cannonTypePart = "(?:\\s+(tnt|sand|gravel))?";
+	//public static final String directionPart = "(?:\\s+([fblruds]))";
 	public static final String vectorPart = "(?:\\s+(s|[fblrud]+))";
-	public static final String allPart = "(?:\\s+(all))?";
+	//public static final String allPart = "(?:\\s+(all))?";
 	
 	public static final Pattern actionPattern = Pattern.compile("^!([a-z_]+\\b)(.*)$", Pattern.CASE_INSENSITIVE);
 	
 	private static ArrayList<PluginInfo> plugins = new ArrayList<PluginInfo>();
 	private static Map<String, PluginInfo> pluginMap = new HashMap<String, PluginInfo>();
 	
-	public static void register(String action, PowerSignsPlugin psplugin)
+	public static void register(String action, IPowerSignsPlugin psplugin)
 	{
 		register(action, "", psplugin);
 	}
 	
-	public static void register(String action, String syntax, PowerSignsPlugin psplugin)
+	public static void register(String action, String syntax, IPowerSignsPlugin psplugin)
 	{
 		PluginInfo plugininfo = new PluginInfo(action, syntax, psplugin);
 		
@@ -615,6 +658,8 @@ public class PowerSigns extends JavaPlugin
 	private boolean debugSnowballs = false;
 	//private boolean debugRightClick = false;
 	private Map<Player, Boolean> debugRCMap = new HashMap<Player, Boolean>();
+	private Map<Location, Map<Player, String>> debugSignMap = new HashMap<Location, Map<Player, String>>();
+	private Map<Player, Map<String, Location>> debugPlayerDebugSignMap = new HashMap<Player, Map<String, Location>>();
 	public boolean debugRedstone = false;
 	
 	
@@ -648,7 +693,7 @@ public class PowerSigns extends JavaPlugin
 		//else
 		//	failMsg = "";
 		
-		BlockState state = block.getState();
+		/*BlockState state = block.getState();
 		if (state instanceof Sign)
 		{
 			Sign sign = ((Sign) state);
@@ -663,6 +708,14 @@ public class PowerSigns extends JavaPlugin
 			}
 			//sign.update(true);
 			//failMsg = "";
+		}*/
+		
+		if (num > 0)
+		{
+			Map<Player, String> playerNameMap = debugSignMap.get(block.getLocation());
+			if (playerNameMap != null)
+				for (Entry<Player, String> entry : playerNameMap.entrySet())
+					entry.getKey().sendMessage("[PowerSigns] " + ChatColor.AQUA + entry.getValue() + ": " + failMsg);
 		}
 	}
 	
@@ -688,6 +741,80 @@ public class PowerSigns extends JavaPlugin
 		return debug != null && debug == true;
 	}
 	
+	public String getSignDebug(Player player, Location loc)
+	{
+		Map<Player, String> namedMap = debugSignMap.get(loc);
+		if (namedMap == null) return null;
+		
+		return namedMap.get(player);
+	}
+	
+	public void setSignDebug(Player player, Location loc, String name)
+	{
+		Map<Player, String> namedMap = debugSignMap.get(loc);
+		if (namedMap == null)
+		{
+			namedMap = new HashMap<Player, String>();
+			debugSignMap.put(loc, namedMap);
+		}
+		namedMap.put(player, name);
+		
+		Map<String, Location> playerLocList = debugPlayerDebugSignMap.get(player);
+		if (playerLocList == null)
+		{
+			playerLocList = new HashMap<String, Location>();
+			debugPlayerDebugSignMap.put(player,  playerLocList);
+		}
+		playerLocList.put(name, loc);
+	}
+	
+	public String delSignDebug(Player player, Location loc)
+	{
+		Map<Player, String> namedMap = debugSignMap.get(loc);
+		if (namedMap == null) return null;
+		namedMap.remove(player);
+		
+		Map<String, Location> playerLocList = debugPlayerDebugSignMap.get(player);
+		if (playerLocList == null) return null;
+		String name = "";
+		for (Entry<String, Location> entry : playerLocList.entrySet())
+		{
+			if (entry.getValue().equals(loc))
+			{
+				name = entry.getKey();
+				playerLocList.remove(name);
+			}
+		}
+		return name;
+	}
+	
+	public void delSignDebug(Player player, String name)
+	{
+		Map<String, Location> playerLocList = debugPlayerDebugSignMap.get(player);
+		if (playerLocList == null) return;
+		
+		Location loc = playerLocList.remove(name);
+		if (loc == null) return;
+		
+		Map<Player, String> namedMap = debugSignMap.get(loc);
+		if (namedMap == null) return;
+		
+		namedMap.remove(player);
+	}
+	
+	public void clearSignDebug(Player player)
+	{
+		Map<String, Location> playerLocList = debugPlayerDebugSignMap.remove(player);
+		if (playerLocList == null) return;
+		
+		for (Entry<String, Location> entry : playerLocList.entrySet())
+		{
+			Map<Player, String> namedMap = debugSignMap.get(entry.getValue());
+			if (namedMap == null) continue;
+			
+			namedMap.remove(player);
+		}
+	}
 	
     //////////////////////// Simple Helper Methods //////////////////////// 
 	// These are helper methods I wish were added to their respective classes

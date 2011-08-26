@@ -1,7 +1,6 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -9,27 +8,16 @@ import org.bukkit.block.BlockFace;
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 import com.ricochet1k.bukkit.powersigns.utils.BlockLine;
 
-public class ActivateLongSignPlugin implements PowerSignsPlugin
+public class ActivateLongSignPlugin extends AimedSign2
 {
 	public static void register() {
-		PowerSigns.register("activatelong", "[u|d]", new ActivateLongSignPlugin());
+		PowerSigns.register("activatelong", AimedSign.syntax, new ActivateLongSignPlugin());
 	}
 	
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart), Pattern.CASE_INSENSITIVE);
-	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
-		Matcher m = argsPattern.matcher(args);
-		if (!m.matches()) return false;
-		
-		//Sign signState = (Sign) signBlock.getState();
-		
-		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
-		
 		BlockLine line = new BlockLine(startBlock, forward);
 		line.skipEmpty();
 		if (PowerSigns.materialsMatch(line.getNextBlock().getType(), PowerSigns.signMaterials))

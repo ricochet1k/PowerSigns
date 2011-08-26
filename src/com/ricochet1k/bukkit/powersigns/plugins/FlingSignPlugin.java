@@ -12,34 +12,30 @@ import org.bukkit.util.Vector;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class FlingSignPlugin implements PowerSignsPlugin
+public class FlingSignPlugin extends AimedSign
 {
-	public static void register() {
-		PowerSigns.register("fling", "[u|d][@(0-99)] [fblr]  /  (0-999) (0-99)", new FlingSignPlugin());
+	public FlingSignPlugin()
+	{
+		super("\\s+([fblr])");
 	}
 	
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, "\\s+([fblr])"), Pattern.CASE_INSENSITIVE);
+	public static void register() {
+		PowerSigns.register("fling", AimedSign.syntax + " [fblr]  /  (0-999) (0-99)", new FlingSignPlugin());
+	}
+	
+	static final Pattern flingBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})");
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, BlockFace signDir,
+			BlockFace forward, Block startBlock)
 	{
-		Matcher argsm = argsPattern.matcher(args);
-		if (!argsm.matches()) return false;
-		
 		Sign signState = (Sign) signBlock.getState();
-		
-		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2));
 		
 		
 		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(3), signDir);
 		
 		//get the target area
-		Block targArea = startBlock; //signBlock.getRelative(signDir);
-		//if(signBlock.getType() == Material.WALL_SIGN)
-		//	targArea = targArea.getRelative(signDir);
+		Block targArea = startBlock;
 		
 		//check the target area is empty
 		String ballisticsLine = signState.getLine(1);
@@ -47,7 +43,6 @@ public class FlingSignPlugin implements PowerSignsPlugin
 			return plugin.debugFail("target blocked");
 		
 		//get the ballistics
-		final Pattern flingBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})");
 		Matcher m = flingBallisticsPattern.matcher(ballisticsLine);
 		if (!m.matches())
 			return plugin.debugFail("parse ballistics");

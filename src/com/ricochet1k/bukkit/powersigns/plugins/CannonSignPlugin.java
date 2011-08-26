@@ -16,40 +16,35 @@ import org.bukkit.inventory.ItemStack;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class CannonSignPlugin implements PowerSignsPlugin
+public class CannonSignPlugin extends AimedSign
 {
+	public CannonSignPlugin()
+	{
+		super("\\s*(sand|gravel|tnt)");
+	}
+
 	public static void register() {
 		PowerSigns.register("cannon", "[u|d][@(0-99)] (sand|gravel|tnt)  /  (0-999) (0-99) [ns]", new CannonSignPlugin());
 	}
 	
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart, PowerSigns.cannonTypePart), Pattern.CASE_INSENSITIVE);
-	
 	static final Pattern cannonBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})(?:\\s+(ns))?");
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
-		Matcher argsm = argsPattern.matcher(args);
-		if (!argsm.matches()) return false;
-		
 		Sign signState = (Sign) signBlock.getState();
-		
-		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2));
 		
 		String type = argsm.group(1);
 		
 		
 		int minCost = 1;
-		//Sign signState = (Sign) signBlock.getState();
 
 		// get the information about the ballistics for the TNT projectile on the second line
 		Matcher m = cannonBallisticsPattern.matcher(signState.getLine(1));
 		if (!m.matches())
 			return plugin.debugFail("parse ballistics");
-		int power = Integer.parseInt(m.group(3));
+		int power = Integer.parseInt(m.group(1));
 		
 		if (power > PowerSigns.maxCannonPower)
 		{
@@ -66,12 +61,12 @@ public class CannonSignPlugin implements PowerSignsPlugin
 		
 		// make sure it's a dispenser
 		if (!startBlock.getType().equals(Material.DISPENSER))
-			return plugin.debugFail("not dispenser");
+			return plugin.debugFail("found "+startBlock.getType()+", not dispenser");
 		Block dispenserBlock = startBlock;
 		// check that the dispenser's facing isn't obstructed
 		final Block placeHere = dispenserBlock.getRelative(PowerSigns.notchToFacing(dispenserBlock.getData()));
 		if (!PowerSigns.isEmpty(placeHere))
-			return plugin.debugFail("dispenser blocked");
+			return plugin.debugFail("dispenser blocked by "+placeHere.getType());
 		
 		int tntCost = power / PowerSigns.powerPerTNT;
 		
@@ -87,7 +82,8 @@ public class CannonSignPlugin implements PowerSignsPlugin
 			neededItems = new ItemStack[] {new ItemStack(Material.TNT, tntCost), new ItemStack(entityMaterial, minCost)};
 		}
 		if (!PowerSigns.tryRemoveItems(neededItems, ((CraftDispenser)dispenserBlock.getState()).getInventory()))
-			return plugin.debugFail("not enough items");
+			return plugin.debugFail("not enough items (" + neededItems[0].getType() + " " + neededItems[0].getAmount() + ")"
+					+ (neededItems.length < 2? "" : (" (" + neededItems[1].getType() + " " + neededItems[1].getAmount() + ")")));
 
 		// spawn the entity
 		final CraftWorld cWorld = (CraftWorld) dispenserBlock.getWorld();

@@ -1,7 +1,6 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -9,27 +8,17 @@ import org.bukkit.block.Sign;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class DetectSignPlugin implements PowerSignsPlugin
+public class DetectSignPlugin extends AimedSign
 {
 	public static void register() {
 		PowerSigns.register("detect", "[u|d][@(0-99)]", new DetectSignPlugin());
 	}
 	
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.verticalPart, PowerSigns.skipPart),
-			Pattern.CASE_INSENSITIVE);
-	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
-		Matcher m = argsPattern.matcher(args);
-		if (!m.matches()) return false;
-		
 		Sign signState = (Sign) signBlock.getState();
-		
-		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
-		BlockFace forward = PowerSigns.getForward(signDir, m.group(1));
-		Block startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, m.group(2));
 		
 		signState.setLine(1, startBlock.getType().toString().toLowerCase());
 		signState.setLine(2, Integer.toString(startBlock.getType().getId()));

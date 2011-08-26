@@ -1,7 +1,6 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -14,28 +13,26 @@ import org.bukkit.util.Vector;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class InvCountSignPlugin implements PowerSignsPlugin
+public class InvCountSignPlugin extends ArgsSign
 {
+	public InvCountSignPlugin()
+	{
+		super(PowerSigns.vectorPart);
+	}
+	
 	public static void register() {
 		InvCountSignPlugin iosp = new InvCountSignPlugin();
 		PowerSigns.register("invcount", "(s|(fblrud)+)", iosp);
 	}
 	
-	static final Pattern argsPattern = Pattern.compile(
-			PowerSigns.join(PowerSigns.vectorPart),
-			Pattern.CASE_INSENSITIVE);
-	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
 	{
-		Matcher m = argsPattern.matcher(args);
-		if (!m.matches()) return plugin.debugFail("syntax");
-		
 		Sign signState = (Sign) signBlock.getState();
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		
-		Vector dir = PowerSigns.strToVector(m.group(1), signDir);
+		Vector dir = PowerSigns.strToVector(argsm.group(1), signDir);
 		
 		Block invBlock = signBlock.getRelative(dir.getBlockX(), dir.getBlockY(), dir.getBlockZ());
 		
@@ -44,7 +41,7 @@ public class InvCountSignPlugin implements PowerSignsPlugin
 		if (state instanceof ContainerBlock)
 			inventory = ((ContainerBlock)state).getInventory();
 		else
-			return plugin.debugFail("bad inv:"+invBlock.getType().toString()+" "+dir.toString());
+			return plugin.debugFail("bad inv:" + invBlock.getType().toString() + " " + dir.toString());
 		
 		
 		Material[] materials = PowerSigns.getMaterials(signState.getLine(1));

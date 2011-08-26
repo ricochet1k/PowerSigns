@@ -1,7 +1,6 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -11,15 +10,17 @@ import org.bukkit.util.Vector;
 import com.avaje.ebeaninternal.server.lib.util.InvalidDataException;
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class LineOpSignPlugin implements PowerSignsPlugin
+public class LineOpSignPlugin extends ArgsSign
 {
+	public LineOpSignPlugin()
+	{
+		super("\\s+(s|[fblrud]+)([1234])\\s*(|~)\\s*(s|[fblrud]+)([1234])");
+	}
+	
 	public static void register() {
 		LineOpSignPlugin lasp = new LineOpSignPlugin();
 		PowerSigns.register("line", "(s|(fblrud)+)(1234) (|~) (s|(fblrud)+)(1234)", lasp);
 	}
-	
-	static final Pattern argsPattern = Pattern.compile("\\s+(s|[fblrud]+)([1234])\\s*(|~)\\s*(s|[fblrud]+)([1234])",
-														   Pattern.CASE_INSENSITIVE);
 	
 	
 	@Override
@@ -28,44 +29,38 @@ public class LineOpSignPlugin implements PowerSignsPlugin
 		Sign signState = (Sign) signBlock.getState();
 		if (args.isEmpty()) args = signState.getLine(1);
 		
+		return super.doPowerSign(plugin, signBlock, action, args);
+	}
+	
+	@Override
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
+	{
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		
-		
-		Matcher m = argsPattern.matcher(args);
-		if (!m.matches()) return plugin.debugFail("syntax");
 
 		Sign[] signStates = new Sign[2];
 		int[] signLines = new int[2];
 
 		for (int i = 0; i < 2; i++)
 		{
-			Vector dir = PowerSigns.strToVector(m.group(1 + i*3), signDir);
+			Vector dir = PowerSigns.strToVector(argsm.group(1 + i*3), signDir);
 
 
 			Block found = signBlock.getRelative(dir.getBlockX(), dir.getBlockY(), dir.getBlockZ());
 			
 			if (!PowerSigns.materialsMatch(found.getType(), PowerSigns.signMaterials))
 			{
-				//PowerSigns.log.info("[LineAlterSignPlugin]" + "Bad block: " + found.getType().toString());
-				return plugin.debugFail("Not sign " + found.getType().toString());
+				return plugin.debugFail("Not sign: " + found.getType().toString());
 			}
 			
-			//signLocs[i] = found.getLocation();
 			signStates[i] = (Sign) found.getState();
 
-			signLines[i] = Integer.parseInt(m.group(2 + i*3)) - 1;
+			signLines[i] = Integer.parseInt(argsm.group(2 + i*3)) - 1;
 		}
 		
-		String op = m.group(3);
+		String op = argsm.group(3);
 		if (op == null) op = "";
 		
-		// final String lineOp = parts[1];
-		//final Location[] rsignLocs = signLocs;
-		//final int[] rsignLines = signLines;
-
-		
-		//Sign sign0 = ((Sign) signLocs[0].getBlock().getState());
-		//Sign sign1 = ((Sign) signLocs[1].getBlock().getState());
 		if (op.equals("")) // copy
 		{
 			signStates[1].setLine(signLines[1], signStates[0].getLine(signLines[0]));

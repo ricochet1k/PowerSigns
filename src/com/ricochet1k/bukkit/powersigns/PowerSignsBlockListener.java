@@ -47,8 +47,20 @@ public class PowerSignsBlockListener extends BlockListener
 		if (blockType == Material.SIGN_POST || blockType == Material.WALL_SIGN) return;
 		if (plugin.debugRedstone) PowerSigns.log.info("[PS] Redstone event:" + Integer.toString(event.getOldCurrent()) + " "
 					+ Integer.toString(event.getNewCurrent()) + " " + blockType.toString());
+
+		boolean wasOn = event.getOldCurrent() > 0;
+		boolean isOn = event.getNewCurrent() > 0;
 		
-		if (event.getNewCurrent() == 0 || event.getOldCurrent() != 0) return;
+		if (wasOn == isOn) // Only process power changes
+		{
+			//if (plugin.debugRedstone) PowerSigns.log.info("[PS] same");
+			return; 
+		}
+		if (!isOn) // for now, only handle turning on
+		{
+			//if (plugin.debugRedstone) PowerSigns.log.info("[PS] not on");
+			return; 
+		}
 		
 		if (blockType == Material.STONE_BUTTON)
 		{

@@ -1,7 +1,6 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -11,31 +10,39 @@ import org.bukkit.block.Sign;
 import com.avaje.ebeaninternal.server.lib.util.InvalidDataException;
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
-public class MathSignPlugin implements PowerSignsPlugin
+public class MathSignPlugin extends ArgsSign
 {
+	static final String line = "\\s*(s|[fblrud]+)([1234])";
+	public MathSignPlugin()
+	{
+		super(line + "\\s*([+-/*&|^]|and|or|xor)" + line + "(?:\\s*=" + line + ")?");
+	}
+	
 	public static void register() {
 		PowerSigns.register("math", "(vector) (+-/*&|^ and or xor) (vector) [= (vector)]", new MathSignPlugin());
 	}
-	
-	static final Pattern argsPattern = Pattern.compile("\\s*(s|[fblrud]+)([1234])\\s*([+-/*&|^]|and|or|xor)\\s*(s|[fblrud]+)([1234])(?:\\s*=\\s*(s|[fblrud]+)([1234]))?", Pattern.CASE_INSENSITIVE);
 	
 	@Override
 	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
 	{
 		Sign signState = (Sign) signBlock.getState();
 		if (args.isEmpty()) args = signState.getLine(1);
-		Matcher argsm = argsPattern.matcher(args);
-		if (!argsm.matches()) return plugin.debugFail("syntax");
+		
+		return super.doPowerSign(plugin, signBlock, action, args);
+	}
+	
+	@Override
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
+	{
+		Sign signState = (Sign) signBlock.getState();
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		
-		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(1), signDir);
-		
-		BlockState state1 = PowerSigns.blockFromVector(signBlock, argsm.group(1), flingDir).getState();
-		BlockState state2 = PowerSigns.blockFromVector(signBlock, argsm.group(4), flingDir).getState();
+		BlockState state1 = PowerSigns.blockFromVector(signBlock, argsm.group(1), signDir).getState();
+		BlockState state2 = PowerSigns.blockFromVector(signBlock, argsm.group(4), signDir).getState();
 		BlockState state3 = null;
 		if (argsm.group(6) != null)
-			state3 = PowerSigns.blockFromVector(signBlock, argsm.group(6), flingDir).getState();
+			state3 = PowerSigns.blockFromVector(signBlock, argsm.group(6), signDir).getState();
 		
 		if (!(state1 instanceof Sign && state2 instanceof Sign && (state3 == null || state3 instanceof Sign))) return plugin.debugFail("not a sign");
 		
