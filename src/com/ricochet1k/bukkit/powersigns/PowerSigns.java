@@ -550,25 +550,25 @@ public class PowerSigns extends JavaPlugin
 		return startBlock.getRelative(skipDir, skip).getRelative(forward, 1);
 	}
 
-	public static BlockFace getDirection(String directionStr, BlockFace signDir, String verticalStr)
+	public static BlockFace getDirection(String directionStr, BlockFace signDir, BlockFace forward)
 	{
 		if (directionStr == null) return null;
 
 		//parse perpendicular move-type sign modifiers
 		if (directionStr.equals("^"))
 		{
-			if (verticalStr == null) return BlockFace.UP;
+			if (forward != BlockFace.UP && forward != BlockFace.DOWN) return BlockFace.UP;
 			else return signDir;
 		}
 		if (directionStr.equals("v"))
 		{
-			if (verticalStr == null) return BlockFace.DOWN;
+			if (forward != BlockFace.UP && forward != BlockFace.DOWN) return BlockFace.DOWN;
 			else return getOppositeFace(signDir);
 		}
 		if (directionStr.equals("<")) return rotateFaceLeft(signDir);
 		if (directionStr.equals(">")) return rotateFaceRight(signDir);
 		
-		log.warning("BAD DIRECTION: "+directionStr+" "+signDir.toString()+" "+verticalStr);
+		log.warning("BAD DIRECTION: "+directionStr+" "+signDir+" "+forward);
 		
 		return null;//shouldn't get to this point
 	}
