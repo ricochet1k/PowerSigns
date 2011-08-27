@@ -538,15 +538,16 @@ public class PowerSigns extends JavaPlugin
 		return signDir;
 	}
 
-	public static Block getStartBlock(Block signBlock, BlockFace signDir, BlockFace forward, String skipStr)
+	public static Block getStartBlock(Block signBlock, BlockFace signDir, BlockFace forward, String skipDirStr, String skipStr)
 	{
+		BlockFace skipDir = skipDirStr != null ? strToDirection(skipDirStr, signDir) : forward;
 		int skip = skipStr != null && skipStr.length() > 0? Integer.parseInt(skipStr) : 0;
 		Block startBlock = signBlock;
 		if (signBlock.getType().equals(Material.WALL_SIGN))
 			startBlock = signBlock.getRelative(signDir, 1); // start on the block it's attached to
 		else if (signBlock.getType().equals(Material.SIGN_POST) && forward == BlockFace.DOWN)
 			startBlock = signBlock.getRelative(forward, 1); // start on what the sign post stands on
-		return startBlock.getRelative(forward, skip + 1);
+		return startBlock.getRelative(skipDir, skip).getRelative(forward, 1);
 	}
 
 	public static BlockFace getDirection(String directionStr, BlockFace signDir, String verticalStr)

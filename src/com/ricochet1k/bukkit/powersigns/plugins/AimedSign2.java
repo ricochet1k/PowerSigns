@@ -25,20 +25,22 @@ public abstract class AimedSign2 extends AimedSign
 	@Override
 	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
 	{
-		Matcher argsm2 = argsPattern.matcher(argsm.group(3));
+		Matcher argsm2 = argsPattern.matcher(argsm.group(4));
 		if (!argsm2.matches()) return plugin.debugFail("syntax2");
 		
 		BlockFace signDir = PowerSigns.getSignDirection(signBlock);
 		BlockFace forward = PowerSigns.getForward(signDir, argsm.group(1));
+		String skipDirStr = argsm.group(2);
+		BlockFace skipDir = skipDirStr != null ? PowerSigns.strToDirection(skipDirStr, forward) : forward;
 		Block startBlock;
-		if (forward != signDir && signBlock.getType().equals(Material.WALL_SIGN))
+		if (skipDir != signDir && signBlock.getType() == Material.WALL_SIGN)
 		{
-			String skipStr = argsm.group(2);
+			String skipStr = argsm.group(3);
 			int skip = skipStr != null && skipStr.length() > 0? Integer.parseInt(skipStr) : 0;
-			startBlock = signBlock.getRelative(forward, skip + 1);
+			startBlock = signBlock.getRelative(skipDir, skip + 1);
 		}
 		else
-			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2));
+			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2), argsm.group(3));
 		
 		return doPowerSign(plugin, signBlock, action, argsm2, signDir, forward, startBlock);
 	}
