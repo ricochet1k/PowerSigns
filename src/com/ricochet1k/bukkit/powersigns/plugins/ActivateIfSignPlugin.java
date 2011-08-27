@@ -22,7 +22,7 @@ public class ActivateIfSignPlugin extends AimedSign2
 			"(s|[fblrud]+)([1-4])\\s*(!?=|<=?|>=?)\\s*(s|[fblrud]+)([1-4])", Pattern.CASE_INSENSITIVE);
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, BlockFace signDir,
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn, BlockFace signDir,
 			BlockFace forward, Block startBlock)
 	{
 		Sign signState = (Sign) signBlock.getState();
@@ -40,7 +40,7 @@ public class ActivateIfSignPlugin extends AimedSign2
 			
 			if (PowerSigns.materialsMatch(testBlock.getType(), PowerSigns.signMaterials))
 			{
-				boolean ret = plugin.tryPowerSign(testBlock);
+				boolean ret = plugin.doPowerSign(testBlock, true);
 				if (ret == fail)
 					return plugin.debugFail("test failed");
 			}
@@ -97,7 +97,7 @@ public class ActivateIfSignPlugin extends AimedSign2
 		
 		if (PowerSigns.materialsMatch(startBlock.getType(), PowerSigns.signMaterials))
 		{
-			plugin.tryPowerSign(startBlock);
+			plugin.doPowerSign(startBlock, true);
 			return true;
 		}
 		else

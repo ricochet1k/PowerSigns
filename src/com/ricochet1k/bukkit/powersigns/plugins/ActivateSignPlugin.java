@@ -14,29 +14,29 @@ public class ActivateSignPlugin extends AimedSign2
 	{
 		super("(?:\\s+(all))?");
 	}
-	
-	public static void register() {
+
+	public static void register()
+	{
 		PowerSigns.register("activate", AimedSign.syntax + " [all]", new ActivateSignPlugin());
 	}
-	
+
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, BlockFace signDir,
-			BlockFace forward, Block startBlock)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
+			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
 		boolean all = argsm.group(1) != null;
-		
-		
+
 		boolean didSomething = false;
 		for (Block block : new BlockLine(startBlock, forward).matches(PowerSigns.signMaterials))
 		{
-			if (!plugin.tryPowerSign(block))
+			if (!plugin.doPowerSign(block, true))
 			{
 				plugin.debugFail("sign failed");
-				//break;
+				// break;
 			}
-			
+
 			didSomething = true;
-			
+
 			if (!all) break;
 		}
 		plugin.debugFail("no match");

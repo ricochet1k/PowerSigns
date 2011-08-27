@@ -16,8 +16,8 @@ public class ToggleSignPlugin extends AimedSign
 	}
 
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, BlockFace signDir,
-			BlockFace forward, final Block startBlock)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
+			BlockFace signDir, BlockFace forward, final Block startBlock)
 	{
 		Runnable r;
 

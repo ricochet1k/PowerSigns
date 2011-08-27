@@ -17,14 +17,14 @@ public abstract class ArgsSign implements IPowerSignsPlugin
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args, Boolean isOn)
 	{
 		Matcher argsm = argsPattern.matcher(args);
 		if (!argsm.matches()) return plugin.debugFail("syntax");
 		
-		return doPowerSign(plugin, signBlock, action, argsm);
+		return doPowerSign(plugin, signBlock, action, argsm, isOn);
 	}
 	
-	public abstract boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm);
+	public abstract boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn);
 
 }

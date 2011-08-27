@@ -30,7 +30,7 @@ public class CannonSignPlugin extends AimedSign
 	static final Pattern cannonBallisticsPattern = Pattern.compile("(\\d{1,3})\\s+(\\d{1,2})(?:\\s+(ns))?");
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
 			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
 		Sign signState = (Sign) signBlock.getState();

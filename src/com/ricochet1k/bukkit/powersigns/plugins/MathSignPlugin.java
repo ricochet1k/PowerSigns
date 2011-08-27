@@ -23,16 +23,16 @@ public class MathSignPlugin extends ArgsSign
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, String args, Boolean isOn)
 	{
 		Sign signState = (Sign) signBlock.getState();
 		if (args.isEmpty()) args = signState.getLine(1);
 		
-		return super.doPowerSign(plugin, signBlock, action, args);
+		return super.doPowerSign(plugin, signBlock, action, args, isOn);
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn)
 	{
 		Sign signState = (Sign) signBlock.getState();
 		

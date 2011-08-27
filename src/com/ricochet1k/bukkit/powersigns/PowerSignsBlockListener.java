@@ -15,7 +15,7 @@ import org.bukkit.inventory.ItemStack;
 public class PowerSignsBlockListener extends BlockListener
 {
 	public static final BlockFace[] adjacentFaces = new BlockFace[] { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST,
-        BlockFace.UP/*, BlockFace.DOWN */}; // Redstone can't be placed on a sign.
+        BlockFace.UP, BlockFace.DOWN }; // -Redstone can't be placed on a sign.- but pressure plates and buttons trigger beneath them
 	
 	private PowerSigns plugin;
 
@@ -56,11 +56,11 @@ public class PowerSignsBlockListener extends BlockListener
 			//if (plugin.debugRedstone) PowerSigns.log.info("[PS] same");
 			return; 
 		}
-		if (!isOn) // for now, only handle turning on
-		{
-			//if (plugin.debugRedstone) PowerSigns.log.info("[PS] not on");
-			return; 
-		}
+		//if (!isOn) // for now, only handle turning on
+		//{
+		//	//if (plugin.debugRedstone) PowerSigns.log.info("[PS] not on");
+		//	return; 
+		//}
 		
 		if (blockType == Material.STONE_BUTTON)
 		{
@@ -77,7 +77,7 @@ public class PowerSignsBlockListener extends BlockListener
 			Block temp = block.getRelative(face);
 			Material tempType = temp.getType();
 			if (tempType.equals(Material.WALL_SIGN) || tempType.equals(Material.SIGN_POST)) {
-				plugin.tryPowerSign(temp);
+				plugin.tryPowerSign(temp, isOn);
 			}
 		}
 	}

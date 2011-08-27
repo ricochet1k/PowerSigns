@@ -15,14 +15,14 @@ public class ActivateLongSignPlugin extends AimedSign2
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
 			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
 		BlockLine line = new BlockLine(startBlock, forward);
 		line.skipEmpty();
 		if (PowerSigns.materialsMatch(line.getNextBlock().getType(), PowerSigns.signMaterials))
 		{
-			if (plugin.tryPowerSign(line.getNextBlock()))
+			if (plugin.doPowerSign(line.getNextBlock(), true))
 				return true;
 			else
 				return plugin.debugFail("sign failed");

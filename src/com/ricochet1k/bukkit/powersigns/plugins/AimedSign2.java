@@ -23,7 +23,7 @@ public abstract class AimedSign2 extends AimedSign
 	}
 
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn)
 	{
 		Matcher argsm2 = argsPattern.matcher(argsm.group(4));
 		if (!argsm2.matches()) return plugin.debugFail("syntax2");
@@ -42,6 +42,6 @@ public abstract class AimedSign2 extends AimedSign
 		else
 			startBlock = PowerSigns.getStartBlock(signBlock, signDir, forward, argsm.group(2), argsm.group(3));
 		
-		return doPowerSign(plugin, signBlock, action, argsm2, signDir, forward, startBlock);
+		return doPowerSign(plugin, signBlock, action, argsm2, isOn, signDir, forward, startBlock);
 	}
 }

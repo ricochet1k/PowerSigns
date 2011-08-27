@@ -24,7 +24,7 @@ public class MoveBlocksSignPlugin extends AimedSign
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
 			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
 		int count = (argsm.group(1) != null) ? Integer.parseInt(argsm.group(1)) : -1;

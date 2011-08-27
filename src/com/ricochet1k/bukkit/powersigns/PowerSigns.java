@@ -45,6 +45,7 @@ import com.ricochet1k.bukkit.powersigns.plugins.CannonSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.DataAccessSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.DetectSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.FlingSignPlugin;
+import com.ricochet1k.bukkit.powersigns.plugins.GateSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.IPowerSignsPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvCountSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvOpSignPlugin;
@@ -130,6 +131,7 @@ public class PowerSigns extends JavaPlugin
 		MathSignPlugin.register();
 		ToggleSignPlugin.register();
 		MoneySignPlugin.register(this);
+		GateSignPlugin.register();
 		
 		reloadPowerSigns();
 	}
@@ -430,14 +432,19 @@ public class PowerSigns extends JavaPlugin
 	private static ArrayList<PluginInfo> plugins = new ArrayList<PluginInfo>();
 	private static Map<String, PluginInfo> pluginMap = new HashMap<String, PluginInfo>();
 	
-	public static void register(String action, IPowerSignsPlugin psplugin)
+	/*public static void register(String action, IPowerSignsPlugin psplugin)
 	{
 		register(action, "", psplugin);
-	}
+	}*/
 	
 	public static void register(String action, String syntax, IPowerSignsPlugin psplugin)
 	{
-		PluginInfo plugininfo = new PluginInfo(action, syntax, psplugin);
+		register(action, "", psplugin, false);
+	}
+	
+	public static void register(String action, String syntax, IPowerSignsPlugin psplugin, boolean handlesPowerOff)
+	{
+		PluginInfo plugininfo = new PluginInfo(action, syntax, psplugin, handlesPowerOff);
 		
 		plugins.add(plugininfo);
 		pluginMap.put(action, plugininfo);
@@ -445,43 +452,88 @@ public class PowerSigns extends JavaPlugin
 		//log.info("[PowerSigns] Registering sign "+action);
 	}
 	
-	public boolean tryPowerSign(Block signBlock)
+	public boolean tryPowerSign(final Block signBlock, final boolean isOn)
 	{
 		if(!materialsMatch(signBlock.getType(), signMaterials)) return false; // not a sign
 		
 		Sign signState = (Sign) signBlock.getState();
 
-		String command = signState.getLine(0);
-		if (command.length() <= 1 || command.charAt(0) != '!') return false;
+		String actionLine = signState.getLine(0);
+		if (actionLine.length() <= 1 || !actionLine.startsWith("!")) return false;
 		
 		failMsg = "";
 		
-		//final String action;
-		
-		//String[] result = matchPatterns(command, actionPattern);
-		//if (result == null) { debugFail("syntax"); doDebugging(signBlock, 2); return false; }
-		
-		//action = m.group(0);
 
+		Matcher m = actionPattern.matcher(actionLine);
 		
+		if (m.matches())
+		{
+			final String action = m.group(1).toLowerCase();
+			final String args = m.group(2);
+		
+			final PluginInfo info = pluginMap.get(action);
+			if (info != null)
+			{
+				if (isOn || info.handlesPowerOff)
+				{
+					getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+						@Override
+						public void run()
+						{
+							doPowerSign(signBlock, info, action, args, isOn);
+						}
+					});
+					return true;
+				}
+			}
+			else
+				return debugFail("bad action: " + action);
+		}
+		
+		return false; // not a powersign
+	}
+	
+	public boolean doPowerSign(Block signBlock, boolean isOn)
+	{
+		if(!materialsMatch(signBlock.getType(), signMaterials)) return false; // not a sign
+		
+		Sign signState = (Sign) signBlock.getState();
 
+		String actionLine = signState.getLine(0);
+		if (actionLine.length() <= 1 || actionLine.charAt(0) != '!') return false;
+		
+		failMsg = "";
+		
+		
+		Matcher m = actionPattern.matcher(actionLine);
+		
+		if (m.matches())
+		{
+			String action = m.group(1).toLowerCase();
+			String args = m.group(2);
+		
+			PluginInfo info = pluginMap.get(action);
+			if (info != null)
+			{
+				if (isOn || info.handlesPowerOff)
+					return doPowerSign(signBlock, info, action, args, isOn);
+				else
+					return false;
+			}
+			else
+				return debugFail("bad action: " + action);
+		}
+
+		return false;
+	}
+	
+	public boolean doPowerSign(Block signBlock, PluginInfo info, String action, String args, boolean isOn)
+	{
 		try
 		{
-			boolean ret = false;
+			failMsg = "";
 			
-			Matcher m = actionPattern.matcher(command);
-			
-			if (m.matches())
-			{
-				String action = m.group(1).toLowerCase();
-				String args = m.group(2);
-			
-				PluginInfo info = pluginMap.get(action);
-				if (info != null)
-					ret = info.plugin.doPowerSign(this, signBlock, action, args);
-				else
-					ret = debugFail("bad action");
-			}
+			boolean ret = info.plugin.doPowerSign(this, signBlock, action, args, isOn);
 			
 			if (!ret) debugFail("unknown");
 			doDebugging(signBlock, ret? 0 : 1);
@@ -492,10 +544,11 @@ public class PowerSigns extends JavaPlugin
 			e.printStackTrace();
 			debugFail("exception");
 			doDebugging(signBlock, 10);
-		}
 
-		return false;
+			return false;
+		}
 	}
+	
 	
 	public void updateSignState(final Sign signState)
 	{

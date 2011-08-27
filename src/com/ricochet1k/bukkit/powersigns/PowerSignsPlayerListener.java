@@ -21,7 +21,7 @@ public class PowerSignsPlayerListener extends PlayerListener {
 				&& PowerSigns.hasPermission(event.getPlayer(), "powersigns.debug.rightclick")
 				&& PowerSigns.materialsMatch(event.getClickedBlock().getType(), PowerSigns.signMaterials))
 		{
-			boolean result = plugin.tryPowerSign(event.getClickedBlock());
+			boolean result = plugin.doPowerSign(event.getClickedBlock(), true);
 			if (!result)
 			{
 				event.getPlayer().sendMessage(ChatColor.RED+ "Sign failed with message: "+ plugin.failMsg);

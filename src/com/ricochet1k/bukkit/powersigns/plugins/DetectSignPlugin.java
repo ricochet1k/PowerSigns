@@ -15,7 +15,7 @@ public class DetectSignPlugin extends AimedSign
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm,
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
 			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
 		Sign signState = (Sign) signBlock.getState();

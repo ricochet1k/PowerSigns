@@ -33,39 +33,39 @@ public class MoneySignPlugin extends AimedSign
 		PowerSigns.register("money", "take|give  /  amount", msp);
 
 		ServerListener serverListener = new ServerListener()
-		{
-			@Override
-			public void onPluginEnable(PluginEnableEvent event)
 			{
-				if (msp.iconomy == null)
+				@Override
+				public void onPluginEnable(PluginEnableEvent event)
 				{
-					Plugin iConomy = plugin.getServer().getPluginManager().getPlugin("iConomy");
-
-					if (iConomy != null)
+					if (msp.iconomy == null)
 					{
-						if (iConomy.isEnabled() && iConomy.getClass().getName().equals("com.iConomy.iConomy"))
+						Plugin iConomy = plugin.getServer().getPluginManager().getPlugin("iConomy");
+
+						if (iConomy != null)
 						{
-							msp.iconomy = (iConomy) iConomy;
-							System.out.println("[PowerSigns-money] Found iConomy.");
+							if (iConomy.isEnabled() && iConomy.getClass().getName().equals("com.iConomy.iConomy"))
+							{
+								msp.iconomy = (iConomy) iConomy;
+								System.out.println("[PowerSigns-money] Found iConomy.");
+							}
 						}
 					}
 				}
-			}
 
-			@Override
-			public void onPluginDisable(PluginDisableEvent event)
-			{
-				if (msp.iconomy != null)
+				@Override
+				public void onPluginDisable(PluginDisableEvent event)
 				{
-					if (event.getPlugin().getDescription().getName().equals("iConomy"))
+					if (msp.iconomy != null)
 					{
-						msp.iconomy = null;
-						System.out.println("[PowerSigns-money] Lost iConomy.");
+						if (event.getPlugin().getDescription().getName().equals("iConomy"))
+						{
+							msp.iconomy = null;
+							System.out.println("[PowerSigns-money] Lost iConomy.");
+						}
 					}
-				}
 
-			}
-		};
+				}
+			};
 
 		plugin.getServer().getPluginManager()
 				.registerEvent(Type.PLUGIN_ENABLE, serverListener, Priority.Monitor, plugin);
@@ -74,8 +74,8 @@ public class MoneySignPlugin extends AimedSign
 	}
 
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, BlockFace signDir,
-			BlockFace forward, Block startBlock)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn,
+			BlockFace signDir, BlockFace forward, Block startBlock)
 	{
 		if (iconomy == null) return plugin.debugFail("No iConomy");
 
@@ -113,7 +113,8 @@ public class MoneySignPlugin extends AimedSign
 			if (other != null) other.subtract(amount);
 			holdings.add(amount);
 		}
-		else // if (action.equals("take"))
+		else
+		// if (action.equals("take"))
 		{
 			if (!holdings.hasEnough(amount)) return plugin.debugFail("Not enough money");
 			holdings.subtract(amount);

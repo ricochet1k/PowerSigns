@@ -26,7 +26,7 @@ public class InvCountSignPlugin extends ArgsSign
 	}
 	
 	@Override
-	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm)
+	public boolean doPowerSign(PowerSigns plugin, Block signBlock, String action, Matcher argsm, Boolean isOn)
 	{
 		Sign signState = (Sign) signBlock.getState();
 		
