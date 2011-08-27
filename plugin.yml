@@ -1,6 +1,6 @@
 name: PowerSigns
 main: com.ricochet1k.bukkit.powersigns.PowerSigns
-version: 1.0
+version: 1.1
 authors: [ricochet1k, KoryuObihiro]
 description: |
     Give your signs Power!
@@ -10,6 +10,8 @@ commands:
     aliases: [ps]
     description: Allows control of PowerSigns.
     usage: |
-           /<command> (debug) (snow[balls] | rightclick | rc) [on|off]
-           Example: /<command> debug snow | Toggles debugging snowballs
-           Example: /<command> debug rightclick on | Enables right-click debugging of PowerSigns.
+           /<command> debug snow | Toggles debugging snowballs
+           /<command> debug rightclick|rc | Toggles right-click debugging of PowerSigns.
+           /<command> debug add [name] | Adds debugging to the sign so you see why it fails.
+           /<command> debug del [name] | Deletes debugging from the sign.
+           /<command> debug clear | Clears all debugging signs.
