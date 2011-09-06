@@ -32,7 +32,7 @@ public class FlingSignPlugin extends AimedSign
 	{
 		Sign signState = (Sign) signBlock.getState();
 
-		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(3), signDir);
+		BlockFace flingDir = PowerSigns.strToDirection(argsm.group(1), signDir);
 
 		// get the target area
 		Block targArea = startBlock;
