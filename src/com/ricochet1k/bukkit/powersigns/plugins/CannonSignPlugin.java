@@ -3,7 +3,7 @@ package com.ricochet1k.bukkit.powersigns.plugins;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.minecraft.server.EntityFallingSand;
+import net.minecraft.server.EntityFallingBlock;
 import net.minecraft.server.EntityTNTPrimed;
 
 import org.bukkit.Material;
@@ -95,8 +95,8 @@ public class CannonSignPlugin extends AimedSign
 		}
 		else if (type.equals("sand") || type.equals("gravel"))
 		{
-			projectile = new EntityFallingSand(cWorld.getHandle(), placeHere.getX() + 0.5f, placeHere.getY() + 0.5f,
-    		                placeHere.getZ() + 0.5f, entityMaterial.getId());
+			projectile = new EntityFallingBlock(cWorld.getHandle(), placeHere.getX() + 0.5f, placeHere.getY() + 0.5f,
+    		                placeHere.getZ() + 0.5f, entityMaterial.getId(), 0);
 		}
 		else
 			return false; //shouldn't happen unless they try an invalid type

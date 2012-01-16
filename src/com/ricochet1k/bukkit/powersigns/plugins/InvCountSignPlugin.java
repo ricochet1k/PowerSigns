@@ -54,7 +54,9 @@ public class InvCountSignPlugin extends ArgsSign
 		
 		signState.setLine(2, Integer.toString(count));
 		
-		return false;
+		plugin.updateSignState(signState);
+		
+		return true;
 	}
 
 }

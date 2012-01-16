@@ -10,6 +10,8 @@ import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.inventory.ItemStack;
 
+import com.ricochet1k.bukkit.powersigns.plugins.PluginInfo;
+
 
 
 public class PowerSignsBlockListener extends BlockListener
@@ -29,11 +31,16 @@ public class PowerSignsBlockListener extends BlockListener
 		Matcher m = PowerSigns.actionPattern.matcher(event.getLine(0));
 		if (m.matches())
 		{
-			if (!PowerSigns.hasPermission(event.getPlayer(), "powersigns.create."+m.group(1).toLowerCase()))
-			{
-				event.getBlock().setType(Material.AIR);
-				event.getPlayer().getWorld().dropItemNaturally(event.getBlock().getLocation(), new ItemStack(Material.SIGN, 1));
-				event.getPlayer().sendMessage(ChatColor.RED + "You do not have permission to create a " + m.group(1) + " sign.");
+			String action = m.group(1).toLowerCase();
+			PluginInfo info = PowerSigns.pluginMap.get(action);
+			if (info != null)
+			{	
+				if(!PowerSigns.hasPermission(event.getPlayer(), "powersigns.create."+m.group(1).toLowerCase()))
+				{
+					event.getBlock().setType(Material.AIR);
+					event.getPlayer().getWorld().dropItemNaturally(event.getBlock().getLocation(), new ItemStack(Material.SIGN, 1));
+					event.getPlayer().sendMessage(ChatColor.RED + "You do not have permission to create a " + m.group(1) + " sign.");
+				}
 			}
 		}
 	}

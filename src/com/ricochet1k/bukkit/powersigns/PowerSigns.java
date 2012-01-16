@@ -1,6 +1,5 @@
 package com.ricochet1k.bukkit.powersigns;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -97,6 +96,14 @@ public class PowerSigns extends JavaPlugin
 	@Override
 	public void onEnable()
 	{
+		getConfig().addDefault("maxDistance", maxDistance);
+		getConfig().addDefault("powerPerTNT", powerPerTNT);
+		getConfig().addDefault("maxCannonPower", maxCannonPower);
+		getConfig().addDefault("maxFlingPower", maxFlingPower);
+		
+		reloadPowerSigns();
+		
+		
 		Plugin test = getServer().getPluginManager().getPlugin("Permissions");
 		if (test != null)
 		{
@@ -132,8 +139,6 @@ public class PowerSigns extends JavaPlugin
 		ToggleSignPlugin.register();
 		MoneySignPlugin.register(this);
 		GateSignPlugin.register();
-		
-		reloadPowerSigns();
 	}
 
 	@Override
@@ -147,11 +152,8 @@ public class PowerSigns extends JavaPlugin
 	public static boolean hasPermission(Player player, String permission)
 	{
 		if (PowerSigns.Permissions != null)
-		{
-			if (PowerSigns.Permissions.has(player, permission)) 
-				return true;
-			else return false;
-		}
+			return PowerSigns.Permissions.has(player, permission);
+		
 		return player.isOp();
 	}
 	
@@ -164,7 +166,6 @@ public class PowerSigns extends JavaPlugin
 		
 		if (label.equalsIgnoreCase("PowerSigns") || label.equalsIgnoreCase("ps"))
 		{
-			// §
 			if (sender instanceof Player)
 				player = (Player)sender;
 			else
@@ -330,7 +331,7 @@ public class PowerSigns extends JavaPlugin
 				}
 				else if(args[0].equalsIgnoreCase("syntax"))
 				{
-					if(!PowerSigns.Permissions.has(player, "powersigns.syntax"))
+					if(!PowerSigns.hasPermission(player, "powersigns.syntax"))
 					{
 						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You do not have access to this command.");
 						return true;
@@ -394,23 +395,10 @@ public class PowerSigns extends JavaPlugin
 	
 	private void reloadPowerSigns()
 	{
-		if (!new File(getDataFolder(),"config.yml").exists())
-		{
-			getConfiguration().setProperty("maxDistance", maxDistance);
-			getConfiguration().setProperty("powerPerTNT", powerPerTNT);
-			getConfiguration().setProperty("maxCannonPower", maxCannonPower);
-			getConfiguration().setProperty("maxFlingPower", maxFlingPower);
-				
-			getConfiguration().save();
-		}
-		
-		getConfiguration().load();
-		maxDistance = getConfiguration().getInt("maxDistance", 50);
-		powerPerTNT = getConfiguration().getInt("powerPerTNT", 50);
-		maxCannonPower = getConfiguration().getInt("maxCannonPower", 200);
-		maxFlingPower = getConfiguration().getInt("maxFlingPower", 900);
-		
-		
+		maxDistance = getConfig().getInt("maxDistance", 50);
+		powerPerTNT = getConfig().getInt("powerPerTNT", 50);
+		maxCannonPower = getConfig().getInt("maxCannonPower", 200);
+		maxFlingPower = getConfig().getInt("maxFlingPower", 900);
 	}
 
 	public static final Material[] signMaterials = new Material[] { Material.SIGN_POST, Material.WALL_SIGN };
@@ -430,7 +418,7 @@ public class PowerSigns extends JavaPlugin
 	public static final Pattern actionPattern = Pattern.compile("^!([a-z_]+\\b)(.*)$", Pattern.CASE_INSENSITIVE);
 	
 	private static ArrayList<PluginInfo> plugins = new ArrayList<PluginInfo>();
-	private static Map<String, PluginInfo> pluginMap = new HashMap<String, PluginInfo>();
+	static Map<String, PluginInfo> pluginMap = new HashMap<String, PluginInfo>();
 	
 	/*public static void register(String action, IPowerSignsPlugin psplugin)
 	{
@@ -531,9 +519,13 @@ public class PowerSigns extends JavaPlugin
 	{
 		try
 		{
-			failMsg = "";
+ 			failMsg = "";
 			
-			boolean ret = info.plugin.doPowerSign(this, signBlock, action, args, isOn);
+			boolean ret;
+			if (materialsMatch(signBlock.getType(), signMaterials))
+				ret = info.plugin.doPowerSign(this, signBlock, action, args, isOn);
+			else
+				ret = debugFail("Not a sign: " + signBlock.getType());
 			
 			if (!ret) debugFail("unknown");
 			doDebugging(signBlock, ret? 0 : 1);
@@ -600,6 +592,8 @@ public class PowerSigns extends JavaPlugin
 			startBlock = signBlock.getRelative(signDir, 1); // start on the block it's attached to
 		else if (signBlock.getType().equals(Material.SIGN_POST) && forward == BlockFace.DOWN)
 			startBlock = signBlock.getRelative(forward, 1); // start on what the sign post stands on
+		if (startBlock == null || skipDir == null || forward == null)
+			log.severe("Something is NULL!");
 		return startBlock.getRelative(skipDir, skip).getRelative(forward, 1);
 	}
 

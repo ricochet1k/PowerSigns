@@ -9,6 +9,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ContainerBlock;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.Furnace;
 import org.bukkit.block.NoteBlock;
 import org.bukkit.block.Sign;
@@ -215,7 +216,7 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 		
 		//World world = ((CraftChunk) from.getChunk()).getHandle().world;
 
-		to.setTypeId(from.getTypeId(), true); // setTypeIdAndData doesn't set data right
+		to.setTypeId(from.getTypeId(), false); // setTypeIdAndData doesn't set data right
 		to.setData(from.getData());
 		
 		BlockState fromState = from.getState();
@@ -251,6 +252,23 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 			
 			toNote.setRawNote(fromNote.getRawNote());
 		}
+		else if (fromState instanceof CreatureSpawner)
+		{
+			CreatureSpawner fromCS = (CreatureSpawner)fromState;
+			CreatureSpawner toCS = (CreatureSpawner)to.getState();
+			
+			toCS.setCreatureType(fromCS.getCreatureType());
+			toCS.setDelay(fromCS.getDelay());
+		}
+		/*else if (!fromState.getClass().getName().equals("org.bukkit.craftbukkit.block.CraftBlockState"))
+		{
+			String s = "";
+			for (Class<?> cls : fromState.getClass().getInterfaces())
+			{
+				s += cls.getName() + ", ";
+			}
+			PowerSigns.log.info("Unknown state class: " + fromState.getClass() + " : " + s);
+		}*/
 
 		/*TileEntity tileEntity = world.getTileEntity(from.getX(), from.getY(), from.getZ());
 
@@ -263,5 +281,7 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 		}*/
 
 		from.setTypeId(0); // clear from
+		
+		to.setTypeIdAndData(to.getTypeId(), to.getData(), true);
 	}
 }
