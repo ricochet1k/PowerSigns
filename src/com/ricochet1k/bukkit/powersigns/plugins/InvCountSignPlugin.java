@@ -6,9 +6,9 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.ContainerBlock;
 import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.util.Vector;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
@@ -38,8 +38,8 @@ public class InvCountSignPlugin extends ArgsSign
 		
 		Inventory inventory;
 		BlockState state = invBlock.getState();
-		if (state instanceof ContainerBlock)
-			inventory = ((ContainerBlock)state).getInventory();
+		if (state instanceof InventoryHolder)
+			inventory = ((InventoryHolder)state).getInventory();
 		else
 			return plugin.debugFail("bad inv:" + invBlock.getType().toString() + " " + dir.toString());
 		

@@ -8,12 +8,12 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.ContainerBlock;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.Furnace;
 import org.bukkit.block.NoteBlock;
 import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 
 import com.ricochet1k.bukkit.powersigns.PowerSigns;
 
@@ -221,12 +221,12 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 		
 		BlockState fromState = from.getState();
 		
-		if (fromState instanceof ContainerBlock)
+		if (fromState instanceof InventoryHolder)
 		{
 			BlockState toState = to.getState();
 			
-			Inventory fromInv = ((ContainerBlock)fromState).getInventory();
-			Inventory toInv = ((ContainerBlock)toState).getInventory();
+			Inventory fromInv = ((InventoryHolder)fromState).getInventory();
+			Inventory toInv = ((InventoryHolder)toState).getInventory();
 			
 			toInv.setContents(fromInv.getContents());
 			fromInv.clear();
@@ -257,7 +257,7 @@ public class BlockLine implements Iterator<Block>, Iterable<Block>
 			CreatureSpawner fromCS = (CreatureSpawner)fromState;
 			CreatureSpawner toCS = (CreatureSpawner)to.getState();
 			
-			toCS.setCreatureType(fromCS.getCreatureType());
+			toCS.setSpawnedType(fromCS.getSpawnedType());
 			toCS.setDelay(fromCS.getDelay());
 		}
 		/*else if (!fromState.getClass().getName().equals("org.bukkit.craftbukkit.block.CraftBlockState"))

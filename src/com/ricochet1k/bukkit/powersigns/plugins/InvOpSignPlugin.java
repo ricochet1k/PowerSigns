@@ -9,7 +9,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.ContainerBlock;
 import org.bukkit.block.Sign;
 import org.bukkit.craftbukkit.entity.CraftItem;
 import org.bukkit.entity.Entity;
@@ -17,6 +16,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.StorageMinecart;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
@@ -55,8 +55,8 @@ public class InvOpSignPlugin extends AimedSign
 		
 		Inventory inventory;
 		BlockState state = invBlock.getState();
-		if (state instanceof ContainerBlock)
-			inventory = ((ContainerBlock) state).getInventory();
+		if (state instanceof InventoryHolder)
+			inventory = ((InventoryHolder) state).getInventory();
 		else
 			return plugin.debugFail("bad inv:" + invBlock.getType().toString() + " " + dir.toString());
 		

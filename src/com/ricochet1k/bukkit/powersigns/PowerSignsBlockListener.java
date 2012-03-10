@@ -6,15 +6,17 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.event.block.BlockListener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockRedstoneEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.inventory.ItemStack;
 
 import com.ricochet1k.bukkit.powersigns.plugins.PluginInfo;
 
 
 
-public class PowerSignsBlockListener extends BlockListener
+public class PowerSignsBlockListener implements Listener
 {
 	public static final BlockFace[] adjacentFaces = new BlockFace[] { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST,
         BlockFace.UP, BlockFace.DOWN }; // -Redstone can't be placed on a sign.- but pressure plates and buttons trigger beneath them
@@ -26,8 +28,8 @@ public class PowerSignsBlockListener extends BlockListener
 		this.plugin = plugin;
 	}
 	
-	@Override
-	public void onSignChange(org.bukkit.event.block.SignChangeEvent event) {
+	@EventHandler
+	public void onSignChange(SignChangeEvent event) {
 		Matcher m = PowerSigns.actionPattern.matcher(event.getLine(0));
 		if (m.matches())
 		{
@@ -45,7 +47,7 @@ public class PowerSignsBlockListener extends BlockListener
 		}
 	}
 
-	@Override
+	@EventHandler
 	public void onBlockRedstoneChange(BlockRedstoneEvent event)
 	{
 		if (plugin.isDisabled()) return;

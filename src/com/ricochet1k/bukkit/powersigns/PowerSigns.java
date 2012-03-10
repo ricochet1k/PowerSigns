@@ -27,8 +27,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -116,12 +114,10 @@ public class PowerSigns extends JavaPlugin
 			log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName() + "[Permissions not found]");
 		}
 		
-		getServer().getPluginManager().registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Highest, this);
-		getServer().getPluginManager().registerEvent(Type.SIGN_CHANGE, blockListener, Priority.Highest, this);
+		getServer().getPluginManager().registerEvents(blockListener, this);
 		
 		// Once Bukkit has support for unregistering events this should be handled in setDebugRightClick
-		getServer().getPluginManager().registerEvent(Type.PLAYER_INTERACT, playerListener, Priority.Normal, this);
-		
+		getServer().getPluginManager().registerEvents(playerListener, this);
 		
 		//PushSignPlugin.register();
 		MoveBlocksSignPlugin.register();
