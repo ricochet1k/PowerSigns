@@ -67,7 +67,7 @@ public class PowerSigns extends JavaPlugin
 	// Fling settings
 	public static int maxFlingPower = 900;
 	
-	//////////// End Settings ////////////
+	///////////// End Settings /////////////
 	
 	
 	// junk
