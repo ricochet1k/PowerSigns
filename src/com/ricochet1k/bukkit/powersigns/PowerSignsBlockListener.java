@@ -37,7 +37,7 @@ public class PowerSignsBlockListener implements Listener
 			PluginInfo info = PowerSigns.pluginMap.get(action);
 			if (info != null)
 			{	
-				if(!PowerSigns.hasPermission(event.getPlayer(), "powersigns.create."+m.group(1).toLowerCase()))
+				if(!event.getPlayer().hasPermission("powersigns.create."+m.group(1).toLowerCase()))
 				{
 					event.getBlock().setType(Material.AIR);
 					event.getPlayer().getWorld().dropItemNaturally(event.getBlock().getLocation(), new ItemStack(Material.SIGN, 1));

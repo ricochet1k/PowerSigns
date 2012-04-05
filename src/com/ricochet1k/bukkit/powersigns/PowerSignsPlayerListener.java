@@ -19,7 +19,7 @@ public class PowerSignsPlayerListener implements Listener {
 	public void onPlayerInteract(PlayerInteractEvent event)
 	{
 		if (event.getAction() == Action.RIGHT_CLICK_BLOCK && plugin.getDebugRightClick(event.getPlayer())
-				&& PowerSigns.hasPermission(event.getPlayer(), "powersigns.debug.rightclick")
+				&& event.getPlayer().hasPermission("powersigns.debug.rightclick")
 				&& PowerSigns.materialsMatch(event.getClickedBlock().getType(), PowerSigns.signMaterials))
 		{
 			boolean result = plugin.doPowerSign(event.getClickedBlock(), true);

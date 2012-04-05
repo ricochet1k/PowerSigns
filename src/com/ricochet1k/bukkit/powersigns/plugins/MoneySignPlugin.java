@@ -1,5 +1,5 @@
 package com.ricochet1k.bukkit.powersigns.plugins;
-
+/*
 import java.util.regex.Matcher;
 
 import org.bukkit.block.Block;
@@ -122,3 +122,4 @@ public class MoneySignPlugin extends AimedSign
 	}
 
 }
+*/

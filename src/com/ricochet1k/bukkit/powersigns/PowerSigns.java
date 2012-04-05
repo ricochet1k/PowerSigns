@@ -29,12 +29,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
-import com.nijiko.permissions.PermissionHandler;
-import com.nijikokun.bukkit.Permissions.Permissions;
 import com.ricochet1k.bukkit.powersigns.plugins.ActivateIfSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.ActivateLongSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.ActivateSignPlugin;
@@ -48,7 +45,6 @@ import com.ricochet1k.bukkit.powersigns.plugins.InvCountSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.InvOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.LineOpSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.MathSignPlugin;
-import com.ricochet1k.bukkit.powersigns.plugins.MoneySignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.MoveBlocksSignPlugin;
 import com.ricochet1k.bukkit.powersigns.plugins.PluginInfo;
 import com.ricochet1k.bukkit.powersigns.plugins.ToggleSignPlugin;
@@ -89,7 +85,7 @@ public class PowerSigns extends JavaPlugin
 		return disabled;
 	}
 	
-	public static PermissionHandler Permissions = null;
+	//public static PermissionHandler Permissions = null;
 
 	@Override
 	public void onEnable()
@@ -102,7 +98,7 @@ public class PowerSigns extends JavaPlugin
 		reloadPowerSigns();
 		
 		
-		Plugin test = getServer().getPluginManager().getPlugin("Permissions");
+		/*Plugin test = getServer().getPluginManager().getPlugin("Permissions");
 		if (test != null)
 		{
 			PowerSigns.Permissions = ((Permissions)test).getHandler();
@@ -112,7 +108,9 @@ public class PowerSigns extends JavaPlugin
 		{
 			log.info("Permissions not found for PowerSigns...");
 			log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName() + "[Permissions not found]");
-		}
+		}*/
+
+		log.info("["+getDescription().getName()+"] Enabling " + getDescription().getFullName());
 		
 		getServer().getPluginManager().registerEvents(blockListener, this);
 		
@@ -133,7 +131,7 @@ public class PowerSigns extends JavaPlugin
 		DataAccessSignPlugin.register();
 		MathSignPlugin.register();
 		ToggleSignPlugin.register();
-		MoneySignPlugin.register(this);
+		//MoneySignPlugin.register(this);
 		GateSignPlugin.register();
 	}
 
@@ -145,13 +143,13 @@ public class PowerSigns extends JavaPlugin
 		plugins.clear();
 	}
 	
-	public static boolean hasPermission(Player player, String permission)
-	{
-		if (PowerSigns.Permissions != null)
-			return PowerSigns.Permissions.has(player, permission);
+	//public static boolean hasPermission(Player player, String permission)
+	//{
+		//if (PowerSigns.Permissions != null)
+		//	return PowerSigns.Permissions.has(player, permission);
 		
-		return player.isOp();
-	}
+		//return player.isOp();
+	//}
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
@@ -175,9 +173,9 @@ public class PowerSigns extends JavaPlugin
 			{
 				//sendUsage(player);
 				player.sendMessage(ChatColor.RED + "[PowerSigns] commands: (alias /ps)");
-				if(PowerSigns.hasPermission(player, "powersigns.debug"))
+				if(player.hasPermission("powersigns.debug"))
 					player.sendMessage(ChatColor.RED + "   debug (snow[balls] | rightclick | rc)");
-				if(PowerSigns.hasPermission(player, "powersigns.syntax"))
+				if(player.hasPermission("powersigns.syntax"))
 					player.sendMessage(ChatColor.RED + "   syntax [signtype]");
 				return true;
 			}
@@ -197,7 +195,7 @@ public class PowerSigns extends JavaPlugin
 					//snowball debugging
 					if (args[1].equalsIgnoreCase("snowballs") || args[1].equalsIgnoreCase("snow"))
 					{
-						if (!hasPermission(player, "powersigns.debug.snowballs"))
+						if (!player.hasPermission("powersigns.debug.snowballs"))
 						{
 							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
@@ -224,7 +222,7 @@ public class PowerSigns extends JavaPlugin
 					//right-click debugging
 					else if (args[1].equalsIgnoreCase("rightclick") || args[1].equalsIgnoreCase("rc"))
 					{
-						if (!hasPermission(player, "powersigns.debug.rightclick"))
+						if (!player.hasPermission("powersigns.debug.rightclick"))
 						{
 							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
@@ -251,7 +249,7 @@ public class PowerSigns extends JavaPlugin
 					//redstone debugging
 					else if (args[1].equalsIgnoreCase("redstone") || args[1].equalsIgnoreCase("rs"))
 					{
-						if (!hasPermission(player, "powersigns.debug.redstone"))
+						if (!player.hasPermission("powersigns.debug.redstone"))
 						{
 							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
@@ -264,7 +262,7 @@ public class PowerSigns extends JavaPlugin
 					}
 					else if (args[1].equalsIgnoreCase("add") || args[1].equalsIgnoreCase("del"))
 					{
-						if (!hasPermission(player, "powersigns.debug.sign"))
+						if (!player.hasPermission("powersigns.debug.sign"))
 						{
 							player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You don't have permission to do that.");
 							return true;
@@ -327,7 +325,7 @@ public class PowerSigns extends JavaPlugin
 				}
 				else if(args[0].equalsIgnoreCase("syntax"))
 				{
-					if(!PowerSigns.hasPermission(player, "powersigns.syntax"))
+					if(!player.hasPermission("powersigns.syntax"))
 					{
 						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You do not have access to this command.");
 						return true;
@@ -340,7 +338,7 @@ public class PowerSigns extends JavaPlugin
 						boolean first = true;
 						for (PluginInfo psplugin : plugins)
 						{
-							if (!hasPermission(player, "powersigns.create."+psplugin.action))
+							if (!player.hasPermission("powersigns.create."+psplugin.action))
 								continue;
 							
 							if (first) first = false;
@@ -373,7 +371,7 @@ public class PowerSigns extends JavaPlugin
 				}
 				else if(args[0].equalsIgnoreCase("reload"))
 				{
-					if(!PowerSigns.hasPermission(player, "powersigns.reload"))
+					if(!player.hasPermission("powersigns.reload"))
 					{
 						player.sendMessage("[PowerSigns] "+ ChatColor.RED + "You do not have access to this command.");
 						return true;
